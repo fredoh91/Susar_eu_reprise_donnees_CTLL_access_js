@@ -5,6 +5,7 @@ import {
 
 import {
   parseReactionListPT,
+  parseMedicalHistory,
 } from "../util.js"
 
 
@@ -31,27 +32,61 @@ async function existeDejaEV_SafetyReportId(poolSusarEuV2, EV_SafetyReportId) {
 
 
 async function insertInto_susar_eu(connectionSusarEuV2, tbCtLL) {
+  // console.log('tbCtLL : ',tbCtLL)
+  // process.exit(1)
   const SQL = `INSERT INTO susar_eu (
     ev_safety_report_identifier,
+    dlpversion,
     num_eudract,
     world_wide_id,
+    sponsorstudynumb,
+    pays_etude,
+    receive_date,
+    receipt_date,
+    gateway_date,
+    initials_height_weight,
+    birth_date,
+    primary_source_qualification,
+    patient_sex,
+    patient_age,
+    patient_age_group,
     utilisateur_import,
+    narratif,
     priorisation,
+    cas_ime,
+    cas_dme,
+    cas_europe,
     id_ctll,
     cas_susar_eu_v1,
     date_reprise_susar_eu_v1,
     created_at,
     updated_at
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)`;
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)`;
   // console.log('ev : ',tbCtLL.EV_SafetyReportIdentifier)
   // console.log('tbCtLL : ',tbCtLL)
 
   const values = [
     tbCtLL.EV_SafetyReportIdentifier,
+    tbCtLL.CaseVersion,
     tbCtLL.StudyRegistrationNumber,
     tbCtLL.CaseReportNumber,
+    tbCtLL.SponsorStudyNumber,
+    tbCtLL.Country,
+    tbCtLL.ReceiveDate,
+    tbCtLL.ReceiptDate,
+    tbCtLL.GatewayDate,
+    tbCtLL.Initials_height_weight,
+    tbCtLL['Birth Date'],
+    tbCtLL['Primary Source Qualification'],
+    tbCtLL.Sex,
+    tbCtLL.Age,
+    tbCtLL['Age Group'],
     tbCtLL.utilisateur_import,
+    tbCtLL.Narrative_reporter_comments_sender_comments,
     tbCtLL.Priorisation,
+    tbCtLL.CasEurope,
+    tbCtLL.CasIME,
+    tbCtLL.casDME,
     tbCtLL.idCTLL,
     true,
     tbCtLL.dateCrea,
@@ -205,87 +240,140 @@ async function insertInto_effets_indesirables(connectionSusarEuV2, tbEffetsIndes
   return insertIds; // Retourner tous les IDs insérés
 }
 
-/**
- * 
- * @param {*} connectionSusarEuV2 
- * @param {*} tbCtLL 
- * @param {*} tbMedicaments 
- * @param {*} tbEffetsIndesirables 
- */
-async function createSusarV2(connectionSusarEuV2, tbCtLL, tbMedicaments, tbEffetsIndesirables) {
 
-  // console.log('EV 3 : ',tbCtLL.EV_SafetyReportIdentifier)
-  if (await existeDejaEV_SafetyReportId(connectionSusarEuV2, tbCtLL.EV_SafetyReportIdentifier) === false) {
-    // logger.info(`Je vais devoir créer des lignes pour ce susar la : ${tbCtLL.idCTLL}`);
 
-    try {
-      await connectionSusarEuV2.beginTransaction();
-      // console.log('tbCtLL : ',tbCtLL)
-      // Insérer dans les différentes tables
-      const idSusarEu = await insertInto_susar_eu(connectionSusarEuV2, tbCtLL);
-      if (idSusarEu) {
-        // console.log(tbMedicaments);
-        // process.exit(1)
-        await insertInto_medicaments(connectionSusarEuV2, tbMedicaments, idSusarEu);
-        await insertInto_effets_indesirables(connectionSusarEuV2, tbEffetsIndesirables, idSusarEu);
-        await connectionSusarEuV2.commit();
-        // process.exit(1)
-      } else {
-        throw new Error('Insertion dans susar_eu a échoué');
-      }
+    /**
+     * 
+     * @param {*} connectionSusarEuV2 
+     * @param {*} tbMedical_history 
+     * @param {*} idSusarEu 
+     * @returns 
+     */
+    async function insertInto_medical_history(connectionSusarEuV2, tbMedical_history, idSusarEu) {
+      const insertIds = [];
+      for (const MedHist of tbMedical_history) {
 
-    } catch (error) {
-      await connectionSusarEuV2.rollback();
-      logger.error(`Erreur lors de la création du SUSAR : ${error.message}`);
-      throw error; // Lancer l'erreur pour qu'elle puisse être attrapée par un .catch()
-    }
-  } else {
-    throw new Error('Le SUSAR existe déjà dans la base de données');
-  }
-}
+        const MedHist_parse = parseMedicalHistory(MedHist.Tout)
+        // const EI_parse_Date = EI_parse.Date
 
-/**
- * 
- * @param {*} connectionSusarEuV2 
- * @param {*} tbCtLL 
- * @param {*} tbMedicaments 
- * @param {*} tbEffetsIndesirables 
- */
-async function createSusarV2_parLot(connectionSusarEuV2, tbCtLL, tbMedicaments, tbEffetsIndesirables) {
-  for (const Ctll of tbCtLL) {
-    // console.log('EV 3 : ',tbCtLL.EV_SafetyReportIdentifier)
-    if (await existeDejaEV_SafetyReportId(connectionSusarEuV2, Ctll.EV_SafetyReportIdentifier) === false) {
-      // logger.info(`Je vais devoir créer des lignes pour ce susar la : ${tbCtLL.idCTLL}`);
-      const Medicaments = tbMedicaments.filter(item => item.idCTLL === Ctll.idCTLL);
-      const EffetsIndesirables = tbEffetsIndesirables.filter(item => item.idCTLL === Ctll.idCTLL);
+        const SQL = `INSERT INTO medical_history (
+          susar_id,
+          medical_history_ctll,
+          disease,
+          continuing,
+          comment,
+          created_at,
+          updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)`;
 
-      try {
-        await connectionSusarEuV2.beginTransaction();
+        const values = [
+          idSusarEu,
+          MedHist.Tout,
+          MedHist_parse.Disease,
+          MedHist_parse.Continuing,
+          MedHist_parse.Comment,
+          MedHist.dateCrea,
+          MedHist.dateModif
+        ];
 
-        const idSusarEu = await insertInto_susar_eu(connectionSusarEuV2, Ctll);
-        if (idSusarEu) {
-
-          await insertInto_medicaments(connectionSusarEuV2, Medicaments, idSusarEu);
-          await insertInto_effets_indesirables(connectionSusarEuV2, EffetsIndesirables, idSusarEu);
-          await connectionSusarEuV2.commit();
-
-        } else {
-          throw new Error('Insertion dans susar_eu a échoué');
+        try {
+          const resu = await connectionSusarEuV2.query(SQL, values);
+          if (resu) {
+            insertIds.push(resu[0].insertId);
+          } else {
+            throw new Error('Insertion dans medical_history a échoué');
+          }
+        } catch (error) {
+          logger.error(`Erreur lors de l'insertion dans medical_history : ${error.message}`);
+          throw error; // Lancer l'erreur pour qu'elle puisse être attrapée par un .catch()
         }
-
-      } catch (error) {
-        await connectionSusarEuV2.rollback();
-        logger.error(`Erreur lors de la création du SUSAR : ${error.message}`);
-        throw error; // Lancer l'erreur pour qu'elle puisse être attrapée par un .catch()
       }
-    } else {
-      // throw new Error('Le SUSAR existe déjà dans la base de données');
+      return insertIds; // Retourner tous les IDs insérés
     }
-  }
-}
 
-export {
-  existeDejaEV_SafetyReportId,
-  createSusarV2,
-  createSusarV2_parLot,
-}
+    // /**
+    //  * 
+    //  * @param {*} connectionSusarEuV2 
+    //  * @param {*} tbCtLL 
+    //  * @param {*} tbMedicaments 
+    //  * @param {*} tbEffetsIndesirables 
+    //  */
+    // async function createSusarV2(connectionSusarEuV2, tbCtLL, tbMedicaments, tbEffetsIndesirables) {
+
+    //   // console.log('EV 3 : ',tbCtLL.EV_SafetyReportIdentifier)
+    //   if (await existeDejaEV_SafetyReportId(connectionSusarEuV2, tbCtLL.EV_SafetyReportIdentifier) === false) {
+    //     // logger.info(`Je vais devoir créer des lignes pour ce susar la : ${tbCtLL.idCTLL}`);
+
+    //     try {
+    //       await connectionSusarEuV2.beginTransaction();
+    //       // console.log('tbCtLL : ',tbCtLL)
+    //       // Insérer dans les différentes tables
+    //       const idSusarEu = await insertInto_susar_eu(connectionSusarEuV2, tbCtLL);
+    //       if (idSusarEu) {
+    //         // console.log(tbMedicaments);
+    //         // process.exit(1)
+    //         await insertInto_medicaments(connectionSusarEuV2, tbMedicaments, idSusarEu);
+    //         await insertInto_effets_indesirables(connectionSusarEuV2, tbEffetsIndesirables, idSusarEu);
+    //         await connectionSusarEuV2.commit();
+    //         // process.exit(1)
+    //       } else {
+    //         throw new Error('Insertion dans susar_eu a échoué');
+    //       }
+
+    //     } catch (error) {
+    //       await connectionSusarEuV2.rollback();
+    //       logger.error(`Erreur lors de la création du SUSAR : ${error.message}`);
+    //       throw error; // Lancer l'erreur pour qu'elle puisse être attrapée par un .catch()
+    //     }
+    //   } else {
+    //     throw new Error('Le SUSAR existe déjà dans la base de données');
+    //   }
+    // }
+
+    /**
+     * 
+     * @param {*} connectionSusarEuV2 
+     * @param {*} tbCtLL 
+     * @param {*} tbMedicaments 
+     * @param {*} tbEffetsIndesirables 
+     */
+    async function createSusarV2_parLot(connectionSusarEuV2, tbCtLL, tbMedicaments, tbEffetsIndesirables, tbMedical_history) {
+      for (const Ctll of tbCtLL) {
+        // console.log('EV 3 : ',tbCtLL.EV_SafetyReportIdentifier)
+        if (await existeDejaEV_SafetyReportId(connectionSusarEuV2, Ctll.EV_SafetyReportIdentifier) === false) {
+          // logger.info(`Je vais devoir créer des lignes pour ce susar la : ${tbCtLL.idCTLL}`);
+          const Medicaments = tbMedicaments.filter(item => item.idCTLL === Ctll.idCTLL);
+          const EffetsIndesirables = tbEffetsIndesirables.filter(item => item.idCTLL === Ctll.idCTLL);
+          const MedHist = tbMedical_history.filter(item => item.idCTLL === Ctll.idCTLL);
+
+          try {
+            await connectionSusarEuV2.beginTransaction();
+
+            const idSusarEu = await insertInto_susar_eu(connectionSusarEuV2, Ctll);
+            if (idSusarEu) {
+
+              await insertInto_medicaments(connectionSusarEuV2, Medicaments, idSusarEu);
+              await insertInto_effets_indesirables(connectionSusarEuV2, EffetsIndesirables, idSusarEu);
+              await insertInto_medical_history(connectionSusarEuV2, MedHist, idSusarEu);
+
+              await connectionSusarEuV2.commit();
+
+            } else {
+              throw new Error('Insertion dans susar_eu a échoué');
+            }
+
+          } catch (error) {
+            await connectionSusarEuV2.rollback();
+            logger.error(`Erreur lors de la création du SUSAR : ${error.message}`);
+            throw error; // Lancer l'erreur pour qu'elle puisse être attrapée par un .catch()
+          }
+        } else {
+          // throw new Error('Le SUSAR existe déjà dans la base de données');
+        }
+      }
+    }
+
+    export {
+      existeDejaEV_SafetyReportId,
+      createSusarV2_parLot,
+    }

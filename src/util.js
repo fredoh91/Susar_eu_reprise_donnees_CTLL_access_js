@@ -114,8 +114,50 @@ function parseReactionListPT(reactionString) {
   return parsedData;
 }
 
+/**
+ * Cette fonction permet de parser les données effets indésirables provenant des fichiers CTLL
+ * @param {*} reactionString 
+ * @returns 
+ */
+function parseMedicalHistory(MedicalHistoryString) {
+  const parsedData = {
+    Disease: null,
+    Continuing: null,
+    Comment: null,
+  };
+
+  // Supprimer une virgule à la fin de la chaîne, si elle existe
+  MedicalHistoryString = MedicalHistoryString.trim().replace(/,$/, '');
+
+  // Vérifier si la chaîne contient une parenthèse fermante
+  const firstParenIndex = MedicalHistoryString.indexOf('(');
+  const lastParenIndex = MedicalHistoryString.lastIndexOf(')');
+
+  if (firstParenIndex === -1 || lastParenIndex === -1) {
+    // Si pas de parenthèses, extraire uniquement la maladie
+    parsedData.Disease = MedicalHistoryString.trim();
+    return parsedData;
+  }
+
+  // Extraire la partie avant la première parenthèse comme Disease
+  parsedData.Disease = MedicalHistoryString.slice(0, firstParenIndex).trim();
+
+  // Extraire la partie entre parenthèses
+  const detailsString = MedicalHistoryString.slice(firstParenIndex + 1, lastParenIndex).trim();
+
+  // Diviser les détails par le séparateur "-"
+  const details = detailsString.split('-').map(item => item.trim());
+
+  // Assigner les valeurs si elles existent
+  parsedData.Continuing = details[0] || null;
+  parsedData.Comment = details[1] || null;
+
+  return parsedData;
+}
+
 export {
   generateRandomString,
   donneformattedDate,
   parseReactionListPT,
+  parseMedicalHistory,
 };

@@ -31,9 +31,9 @@ import {
 
 import {
   donneAdresseMail,
-  donneTbCTLL,
-  donneTbProduits_EU,
-  donneTbPT_EU,
+  // donneTbCTLL,
+  // donneTbProduits_EU,
+  // donneTbPT_EU,
   donneToutAdresseMail,
 } from './db/query_Susar_v1.js'
 
@@ -43,7 +43,8 @@ import {
 } from './JSON_Save.js'
 
 import {
-  parseReactionListPT
+  parseReactionListPT,
+  parseMedicalHistory,
 } from './util.js'
 
 import MedicParser from './MedicParser.js';
@@ -95,16 +96,31 @@ const main = async () => {
   // PT = `Chronic obstructive pulmonary disease (Recovered/Resolved - 27/06/2022 - 16d),`
   // console.log (parseReactionListPT(PT))
 
-  const parser = new MedicParser();
-  let Med = `VYXEOS LIPOSOMAL POWDER FOR CONCENTRATE FOR SOLUTION FOR INFUSION [CYTARABINE, DAUNORUBICIN] (S - Acute myeloid leukaemia - Not applicable - [07/06/2022 - n/a - 100ug/m2 - Intravenous use])`
-  console.log(parser.parseMedicCtll(Med))
-  Med = `ABATACEPT [ABATACEPT] (S - Rheumatoid arthritis - Drug withdrawn - [03/01/2017 - n/a - n/a - Subcutaneous use]),`
-  console.log(parser.parseMedicCtll(Med))
-  Med = `THYMOGLOBULIN [RABBIT ANTI-HUMAN THYMOCYTE IMMUNOGLOBULIN] (S - Prophylaxis against transplant rejection - Unknown - [26/08/2021 - n/a - 100mg - Intravenous use - More in ICSR])`
-  console.log(parser.parseMedicCtll(Med))
-  Med = `HZN-4920 [HZN-4920] (S - Prophylaxis against transplant rejection - n/a - [07/04/2022 - 1d - 1500mg - Intravenous use - More in ICSR]),`
-  // PMedT = `HZN-4920 [HZN-4920] (S - Prophylaxis against transplant rejection - n/a - [07/04/2022 - 1d - 1500mg - Intravenous use - More in ICSR])`
-  console.log(parser.parseMedicCtll(Med))
+  // const parser = new MedicParser();
+  // let Med = `VYXEOS LIPOSOMAL POWDER FOR CONCENTRATE FOR SOLUTION FOR INFUSION [CYTARABINE, DAUNORUBICIN] (S - Acute myeloid leukaemia - Not applicable - [07/06/2022 - n/a - 100ug/m2 - Intravenous use])`
+  // console.log(parser.parseMedicCtll(Med))
+  // Med = `ABATACEPT [ABATACEPT] (S - Rheumatoid arthritis - Drug withdrawn - [03/01/2017 - n/a - n/a - Subcutaneous use]),`
+  // console.log(parser.parseMedicCtll(Med))
+  // Med = `THYMOGLOBULIN [RABBIT ANTI-HUMAN THYMOCYTE IMMUNOGLOBULIN] (S - Prophylaxis against transplant rejection - Unknown - [26/08/2021 - n/a - 100mg - Intravenous use - More in ICSR])`
+  // console.log(parser.parseMedicCtll(Med))
+  // Med = `HZN-4920 [HZN-4920] (S - Prophylaxis against transplant rejection - n/a - [07/04/2022 - 1d - 1500mg - Intravenous use - More in ICSR]),`
+  // // PMedT = `HZN-4920 [HZN-4920] (S - Prophylaxis against transplant rejection - n/a - [07/04/2022 - 1d - 1500mg - Intravenous use - More in ICSR])`
+  // console.log(parser.parseMedicCtll(Med))
+
+  
+  
+  
+
+  let PT = `Chronic obstructive pulmonary disease ( Yes - Not available)`
+  console.log (parseMedicalHistory(PT))
+  PT = `Cancer surgery ( Not available - Not available)`
+  console.log (parseMedicalHistory(PT))
+  PT = `Asthma ( Not available - Not available)`
+  console.log (parseMedicalHistory(PT))
+  PT = `Mammoplasty ( Not available - breast implant insertion was not cancer related and was not suspected as causal)`
+  console.log (parseMedicalHistory(PT))
+  PT = `( Not available - Not available)`
+  console.log (parseMedicalHistory(PT))
 
 
   // const Ctll = {  idCTLL: 1, BaseArchive: 0, EV_SafetyReportIdentifier: 'EU-EC-10012907966'};
