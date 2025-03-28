@@ -4,8 +4,9 @@ import {
 } from '../logs_config.js'
 
 import {
-  existeDejaEV_SafetyReportId,
-  createSusarV2,
+  // existeDejaEV_SafetyReportId,
+  // createSusarV2,
+  createSusarV2_parLot,
 } from './query_Susar_v2.js'
 
 import odbc from 'odbc';
@@ -134,6 +135,69 @@ async function donneTbPT_EU (poolSusarDataOdbc, poolSusarArchiveOdbc, Ctll) {
  * @param {*} poolSusarDataOdbc 
  * @param {*} poolSusarArchiveOdbc 
  * @param {*} tabIdCtll 
+*/
+async function donneLotTbCTLL(poolSusarData, lstCtll, typeBase){
+  let resu = null
+  if (typeBase === 'ARCHIVE') {
+    const SQL = `SELECT * FROM CTLL_archive WHERE CTLL_archive.idCTLL IN (${lstCtll});`
+    resu = await poolSusarData.query(SQL);
+    return resu
+  } else if (typeBase === 'DATA') {
+    const SQL = `SELECT * FROM CTLL WHERE CTLL.idCTLL IN (${lstCtll});`
+    resu = await poolSusarData.query(SQL)
+    return resu
+  } else {
+    return false
+  }
+}
+
+/**
+ * 
+ * @param {*} poolSusarDataOdbc 
+ * @param {*} poolSusarArchiveOdbc 
+ * @param {*} tabIdCtll 
+ */
+async function donneLotTbProduits_EU(poolSusarData, lstCtll, typeBase){
+  let resu = null
+  if (typeBase === 'ARCHIVE') {
+    const SQL = `SELECT * FROM Produits_EU_archive WHERE Produits_EU_archive.idCTLL IN (${lstCtll});`
+    resu = await poolSusarData.query(SQL);
+    return resu
+  } else if (typeBase === 'DATA') {
+    const SQL = `SELECT * FROM Produits_EU WHERE Produits_EU.idCTLL IN (${lstCtll});`
+    resu = await poolSusarData.query(SQL)
+    return resu
+  } else {
+    return false
+  }
+}
+
+/**
+ * 
+ * @param {*} poolSusarDataOdbc 
+ * @param {*} poolSusarArchiveOdbc 
+ * @param {*} tabIdCtll 
+ */
+async function donneLotTbPT_EU(poolSusarData, lstCtll, typeBase){
+  let resu = null
+  if (typeBase === 'ARCHIVE') {
+    const SQL = `SELECT * FROM PT_EU_archive WHERE PT_EU_archive.idCTLL IN (${lstCtll});`
+    resu = await poolSusarData.query(SQL);
+    return resu
+  } else if (typeBase === 'DATA') {
+    const SQL = `SELECT * FROM PT_EU WHERE PT_EU.idCTLL IN (${lstCtll});`
+    resu = await poolSusarData.query(SQL)
+    return resu
+  } else {
+    return false
+  }
+}
+
+/**
+ * 
+ * @param {*} poolSusarDataOdbc 
+ * @param {*} poolSusarArchiveOdbc 
+ * @param {*} tabIdCtll 
  */
 async function donneAdresseMail_requeteBaseAccess (poolSusarDataOdbc, userName) {
 
@@ -179,6 +243,23 @@ async function donneToutAdresseMail (poolSusarDataOdbc) {
   }
 }
 
+async function donneSQL_IN(tabIdCtll,typeBase) {
+
+  if (typeBase === 'DATA') {
+
+    const tabIdCtll_filter = tabIdCtll.filter(item => item.BaseArchive === 0)
+    const idCTLLString = tabIdCtll_filter.map(item => item.idCTLL).join(',');
+    return idCTLLString
+  } else if (typeBase === 'ARCHIVE') {
+    const tabIdCtll_filter = tabIdCtll.filter(item => item.BaseArchive === -1)
+    const idCTLLString = tabIdCtll_filter.map(item => item.idCTLL).join(',');
+    return idCTLLString
+  } else {
+    return null 
+  }
+  // const idCTLLString = tabIdCtll.map(item => item.idCTLL).join(';');
+}
+
 /**
  * cette fonction permet de traiter un lot d'idCTLL
  * @param {*} poolSusarDataOdbc 
@@ -189,28 +270,34 @@ async function donneToutAdresseMail (poolSusarDataOdbc) {
 async function trtLotIdCtll (poolSusarDataOdbc, poolSusarArchiveOdbc, connectionSusarEuV2, tabIdCtll) {
   // logger.info(`Nombre de lignes retournées : ${tabIdCtll.length}`);
 
-  for (const Ctll of tabIdCtll) {
-    // logger.info(`Nombre de lignes retournées pour idCtllDebut=${idCTLL}`);
-    const existeEV_SafetyReportId = await existeDejaEV_SafetyReportId(connectionSusarEuV2,Ctll.EV_SafetyReportIdentifier)
+  // liste des idCTLL séparés par des virgules pour construire une clause SQL IN (...)
+  const lstCtll_Data = await donneSQL_IN(tabIdCtll,'DATA')
 
-    if (existeEV_SafetyReportId === false) {
+  if (lstCtll_Data) {
+    // tableau d'objet des tables CTLL
+    const lotTbCtLL_Data = await donneLotTbCTLL(poolSusarDataOdbc, lstCtll_Data, 'DATA');
+    // tableau d'objet des Produits_EU
+    const lotTbMedicaments_Data = await donneLotTbProduits_EU (poolSusarDataOdbc, lstCtll_Data, 'DATA');
+    // tableau d'objet des PT_EU
+    const lotTbEffetsIndesirables_Data = await donneLotTbPT_EU (poolSusarDataOdbc, lstCtll_Data, 'DATA');
 
-      // CTLL.EV_SafetyReportIdentifier n'existe pas dans la table susar_eu, on va pouvoir le créer
-      // On récupère les données dans susar_v1 pour les insérer dans susar_v2
-      const tbCtLL = await donneTbCTLL(poolSusarDataOdbc, poolSusarArchiveOdbc, Ctll);
-
-      const tbMedicaments = await donneTbProduits_EU (poolSusarDataOdbc, poolSusarArchiveOdbc, Ctll);
-      // const tbMedicaments = await chargementObjet("tbMedicaments")
-      // console.log(tbMedicaments)
-
-      const tbEffetsIndesirables = await donneTbPT_EU (poolSusarDataOdbc, poolSusarArchiveOdbc, Ctll);
-      // const tbEffetsIndesirables = await chargementObjet("tbEffetsIndesirables")
-      // console.log(tbEffetsIndesirables)
-
-      // Insertion dans la base susar_eu_v2
-      await createSusarV2 (connectionSusarEuV2, tbCtLL, tbMedicaments, tbEffetsIndesirables);
-    }
+    await createSusarV2_parLot (connectionSusarEuV2, lotTbCtLL_Data, lotTbMedicaments_Data, lotTbEffetsIndesirables_Data);
   }
+
+  // liste des idCTLL séparés par des virgules pour construire une clause SQL IN (...)
+  const lstCtll_Archive = await donneSQL_IN(tabIdCtll,'ARCHIVE')
+
+  if (lstCtll_Archive) {
+    // tableau d'objet des tables CTLL
+    const lotTbCtLL_Archive = await donneLotTbCTLL(poolSusarArchiveOdbc, lstCtll_Archive, 'ARCHIVE');
+    // tableau d'objet des Produits_EU
+    const lotTbMedicaments_Archive = await donneLotTbProduits_EU (poolSusarArchiveOdbc, lstCtll_Archive, 'ARCHIVE');
+    // tableau d'objet des PT_EU
+    const lotTbEffetsIndesirables_Archive = await donneLotTbPT_EU (poolSusarArchiveOdbc, lstCtll_Archive, 'ARCHIVE');
+    
+    await createSusarV2_parLot (connectionSusarEuV2, lotTbCtLL_Archive, lotTbMedicaments_Archive, lotTbEffetsIndesirables_Archive);
+  }
+
 }
 
 

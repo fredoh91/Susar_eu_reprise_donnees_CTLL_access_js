@@ -1,5 +1,5 @@
 
-import { 
+import {
   logger,
 } from './logs_config.js'
 
@@ -14,13 +14,13 @@ const currentDir = path.dirname(fileURLToPath(currentUrl));
 const envPath = path.resolve(currentDir, '..', '.env');
 dotenv.config({ path: envPath });
 
-import { 
+import {
   createPoolSusarEuV2,
   closePoolSusarEuV2,
 } from './db/dbMySQL.js';
 
 
-import { 
+import {
   createPoolSusarEuV1_Odbc,
   closePoolSusarEuV1_Odbc,
 } from './db/dbODBC.js';
@@ -42,6 +42,12 @@ import {
   chargementObjet,
 } from './JSON_Save.js'
 
+import {
+  parseReactionListPT
+} from './util.js'
+
+import MedicParser from './MedicParser.js';
+
 const main = async () => {
   // logger.info('Début import : CODEX => CODEX_extract');
   logger.info('Début test');
@@ -49,7 +55,7 @@ const main = async () => {
   const poolSusarDataOdbc = await createPoolSusarEuV1_Odbc('DATA');
   const poolSusarArchiveOdbc = await createPoolSusarEuV1_Odbc('ARCHIVE');
   const poolSusarEuV2 = await createPoolSusarEuV2();
-  const Ctll = {  idCTLL: 31, BaseArchive: -1, EV_SafetyReportIdentifier: 'EU-EC-10012907966'};
+  const Ctll = { idCTLL: 31, BaseArchive: -1, EV_SafetyReportIdentifier: 'EU-EC-10012907966' };
 
   // const tbCtLL = await donneTbCTLL(poolSusarDataOdbc, poolSusarArchiveOdbc, Ctll);
   // await sauvegardeObjet(tbCtLL,"tbCtLL")
@@ -60,22 +66,46 @@ const main = async () => {
   // const tbEffetsIndesirables = await donneTbPT_EU (poolSusarDataOdbc, poolSusarArchiveOdbc, Ctll);
   // await sauvegardeObjet(tbEffetsIndesirables,"tbEffetsIndesirables")
 
-  const tbCtLL = await chargementObjet("tbCtLL")
-  const tbMedicaments = await chargementObjet("tbMedicaments")
-  const tbEffetsIndesirables = await chargementObjet("tbEffetsIndesirables")
+  // const tbCtLL = await chargementObjet("tbCtLL")
+  // const tbMedicaments = await chargementObjet("tbMedicaments")
+  // const tbEffetsIndesirables = await chargementObjet("tbEffetsIndesirables")
 
-  const userAdresseMail = await donneToutAdresseMail(poolSusarDataOdbc)
+  // const userAdresseMail = await donneToutAdresseMail(poolSusarDataOdbc)
 
-  Object.defineProperty(global, 'userAdresseMail', {
-    value: userAdresseMail,
-    writable: false, // Empêche la modification de la valeur
-    configurable: false, // Empêche la suppression ou la redéfinition de la propriété
-    enumerable: true, // Permet d'énumérer la propriété (facultatif)
-  });
+  // Object.defineProperty(global, 'userAdresseMail', {
+  //   value: userAdresseMail,
+  //   writable: false, // Empêche la modification de la valeur
+  //   configurable: false, // Empêche la suppression ou la redéfinition de la propriété
+  //   enumerable: true, // Permet d'énumérer la propriété (facultatif)
+  // });
 
-  console.log(await donneAdresseMail(poolSusarDataOdbc,'Frannou'))  
-  console.log(await donneAdresseMail(poolSusarDataOdbc,'Mnedelec')) 
-  console.log(await donneAdresseMail(poolSusarDataOdbc,'Mnedeloc')) 
+  // console.log(await donneAdresseMail(poolSusarDataOdbc,'Frannou'))  
+  // console.log(await donneAdresseMail(poolSusarDataOdbc,'Mnedelec')) 
+  // console.log(await donneAdresseMail(poolSusarDataOdbc,'Mnedeloc')) 
+
+  // const PT = 'Cardiac failure acute (Not Recovered/Not Resolved - 07/07/2022 - 14d)'
+  // const PT = 'Cardiac failure acute (Not Recovered/Not Resolved - 07/07/2022 - 14d),'
+
+  // let PT = `Drug-induced liver injury (Recovering/Resolving - n/a - n/a),`
+  // console.log (parseReactionListPT(PT))
+  // PT = `Pleural effusion (Unknown - 16/01/2`
+  // console.log (parseReactionListPT(PT))
+  // PT = `Platelet count decreased (Recoveri`
+  // console.log (parseReactionListPT(PT))
+  // PT = `Chronic obstructive pulmonary disease (Recovered/Resolved - 27/06/2022 - 16d),`
+  // console.log (parseReactionListPT(PT))
+
+  const parser = new MedicParser();
+  let Med = `VYXEOS LIPOSOMAL POWDER FOR CONCENTRATE FOR SOLUTION FOR INFUSION [CYTARABINE, DAUNORUBICIN] (S - Acute myeloid leukaemia - Not applicable - [07/06/2022 - n/a - 100ug/m2 - Intravenous use])`
+  console.log(parser.parseMedicCtll(Med))
+  Med = `ABATACEPT [ABATACEPT] (S - Rheumatoid arthritis - Drug withdrawn - [03/01/2017 - n/a - n/a - Subcutaneous use]),`
+  console.log(parser.parseMedicCtll(Med))
+  Med = `THYMOGLOBULIN [RABBIT ANTI-HUMAN THYMOCYTE IMMUNOGLOBULIN] (S - Prophylaxis against transplant rejection - Unknown - [26/08/2021 - n/a - 100mg - Intravenous use - More in ICSR])`
+  console.log(parser.parseMedicCtll(Med))
+  Med = `HZN-4920 [HZN-4920] (S - Prophylaxis against transplant rejection - n/a - [07/04/2022 - 1d - 1500mg - Intravenous use - More in ICSR]),`
+  // PMedT = `HZN-4920 [HZN-4920] (S - Prophylaxis against transplant rejection - n/a - [07/04/2022 - 1d - 1500mg - Intravenous use - More in ICSR])`
+  console.log(parser.parseMedicCtll(Med))
+
 
   // const Ctll = {  idCTLL: 1, BaseArchive: 0, EV_SafetyReportIdentifier: 'EU-EC-10012907966'};
   // const med = await donneTbProduits_EU (poolSusarDataOdbc, poolSusarArchiveOdbc, Ctll)
@@ -83,10 +113,10 @@ const main = async () => {
   //   console.log(medoc.ProduitSuspect_EU)
   // }
   // console.log (med)
-// const user1 = await donneAdresseMail(poolSusarDataOdbc, 'Frannou')
-// const user2 = await donneAdresseMail(poolSusarDataOdbc, 'Mnedelec')
-// console.log (user1.mail)
-// console.log (user2.mail)
+  // const user1 = await donneAdresseMail(poolSusarDataOdbc, 'Frannou')
+  // const user2 = await donneAdresseMail(poolSusarDataOdbc, 'Mnedelec')
+  // console.log (user1.mail)
+  // console.log (user2.mail)
 
   await closePoolSusarEuV1_Odbc(poolSusarDataOdbc);
   await closePoolSusarEuV1_Odbc(poolSusarArchiveOdbc);

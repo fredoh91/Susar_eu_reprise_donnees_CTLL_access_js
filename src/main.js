@@ -89,44 +89,19 @@ const main = async () => {
 
   let idCtllDebut = parseInt(process.env.ID_CTLL_DEBUT, 10);
   let idCtllFin = parseInt(process.env.ID_CTLL_FIN, 10);
-  // const promises = [];
 
   while (true) {
-        const tabIdCtll = await donneListIdCtll(poolSusarDataOdbc, poolSusarArchiveOdbc, idCtllDebut, idCtllFin)
-        // .then(async result => {
-            // logger.info(`Nombre de lignes retournées pour idCtllDebut=${idCtllDebut}, idCtllFin=${idCtllFin} : ${result.length}`);
-        logger.info(`Pour les idCTLL est compris entre ${idCtllDebut} et ${idCtllFin}, nombre de lignes retournées : ${tabIdCtll.length}`);
-        if (tabIdCtll.length === 0) {
-          break
-        }
-        await trtLotIdCtll(poolSusarDataOdbc, poolSusarArchiveOdbc, connectionSusarEuV2, tabIdCtll);
+    const tabIdCtll = await donneListIdCtll(poolSusarDataOdbc, poolSusarArchiveOdbc, idCtllDebut, idCtllFin)
 
-        //     return result;
-        // })
-        // .catch(error => {
-        //     logger.error(`Erreur lors du traitement des données : ${error.message}`);
-        //     return []; // Retourner un tableau vide en cas d'erreur
-        // });
-    // promises.push(promise);
+    logger.info(`Pour les idCTLL est compris entre ${idCtllDebut} et ${idCtllFin}, nombre de lignes retournées : ${tabIdCtll.length}`);
+    if (tabIdCtll.length === 0) {
+      break
+    }
+    await trtLotIdCtll(poolSusarDataOdbc, poolSusarArchiveOdbc, connectionSusarEuV2, tabIdCtll);
 
-    // Incrémenter les valeurs pour la prochaine itération
     idCtllDebut += 100;
     idCtllFin += 100;
-    // // Attendre que toutes les promesses soient résolues
-    // const results = await Promise.all(promises);
-
-    // // Vérifier si l'une des promesses a retourné un tableau vide
-    // if (results.some(result => result.length === 0)) {
-    //   console.log('probleme')
-    //   break;
-    // }
-
-    // // Vider le tableau des promesses pour la prochaine itération
-    // promises.length = 0;
   }
-
-  // Attendre que toutes les promesses finales soient résolues avant de fermer les pools
-  // await Promise.all(promises);
 
   await closePoolSusarEuV1_Odbc(poolSusarDataOdbc);
   await closePoolSusarEuV1_Odbc(poolSusarArchiveOdbc);
