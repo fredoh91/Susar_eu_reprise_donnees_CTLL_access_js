@@ -155,9 +155,37 @@ function parseMedicalHistory(MedicalHistoryString) {
   return parsedData;
 }
 
+/**
+ * Cette fonction permet de parser les indications des produits.
+ * Elle divise la chaîne en deux parties : "product_name" et "product_indications_eng",
+ * en utilisant " - " comme séparateur.
+ *
+ * @param {string} IndicationString - La chaîne à parser.
+ * @returns {Object} - Un objet contenant "product_name" et "product_indications_eng".
+ */
+function parseIndication(IndicationString) {
+  const parsedData = {
+    product_name: null,
+    product_indications_eng: null,
+  };
+
+  // Supprimer une virgule à la fin de la chaîne, si elle existe
+  IndicationString = IndicationString.trim().replace(/,$/, '');
+
+  // Diviser la chaîne en deux parties en utilisant " - " comme séparateur
+  const parts = IndicationString.split(' - ');
+
+  // Assigner les valeurs si elles existent
+  parsedData.product_name = parts[0] ? parts[0].trim() : null;
+  parsedData.product_indications_eng = parts[1] ? parts[1].trim() : null;
+
+  return parsedData;
+}
+
 export {
   generateRandomString,
   donneformattedDate,
   parseReactionListPT,
   parseMedicalHistory,
+  parseIndication,
 };

@@ -99,8 +99,10 @@ const main = async () => {
     }
     await trtLotIdCtll(poolSusarDataOdbc, poolSusarArchiveOdbc, connectionSusarEuV2, tabIdCtll);
 
-    idCtllDebut += 100;
-    idCtllFin += 100;
+    // idCtllDebut += 100;
+    // idCtllFin += 100;
+    idCtllDebut += parseInt(process.env.PAS_UPPER, 10);
+    idCtllFin += parseInt(process.env.PAS_UPPER, 10);
   }
 
   await closePoolSusarEuV1_Odbc(poolSusarDataOdbc);

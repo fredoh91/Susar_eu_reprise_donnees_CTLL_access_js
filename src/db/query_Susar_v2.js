@@ -6,6 +6,7 @@ import {
 import {
   parseReactionListPT,
   parseMedicalHistory,
+  parseIndication,
 } from "../util.js"
 
 
@@ -40,7 +41,8 @@ async function insertInto_susar_eu(connectionSusarEuV2, tbCtLL) {
     num_eudract,
     world_wide_id,
     sponsorstudynumb,
-    pays_etude,
+/*pays_etude,*/
+    pays_survenue,
     receive_date,
     receipt_date,
     gateway_date,
@@ -291,6 +293,55 @@ async function insertInto_effets_indesirables(connectionSusarEuV2, tbEffetsIndes
       return insertIds; // Retourner tous les IDs insérés
     }
 
+
+
+    /**
+     * 
+     * @param {*} connectionSusarEuV2 
+     * @param {*} tbMedical_history 
+     * @param {*} idSusarEu 
+     * @returns 
+     */
+    async function insertInto_indications(connectionSusarEuV2, tbIndication, idSusarEu) {
+      const insertIds = [];
+      for (const Indication of tbIndication) {
+
+        const Indication_parse = parseIndication(Indication.Tout)
+        // const EI_parse_Date = EI_parse.Date
+
+        const SQL = `INSERT INTO indications (
+          susar_id,
+          indication_ctll,
+          product_name,
+          product_indications_eng,
+          created_at,
+          updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?)`;
+
+        const values = [
+          idSusarEu,
+          Indication.Tout,
+          Indication_parse.product_name,
+          Indication_parse.product_indications_eng,
+          Indication.dateCrea,
+          Indication.dateModif
+        ];
+
+        try {
+          const resu = await connectionSusarEuV2.query(SQL, values);
+          if (resu) {
+            insertIds.push(resu[0].insertId);
+          } else {
+            throw new Error('Insertion dans insications a échoué');
+          }
+        } catch (error) {
+          logger.error(`Erreur lors de l'insertion dans indications : ${error.message}`);
+          throw error; // Lancer l'erreur pour qu'elle puisse être attrapée par un .catch()
+        }
+      }
+      return insertIds; // Retourner tous les IDs insérés
+    }
+
     // /**
     //  * 
     //  * @param {*} connectionSusarEuV2 
@@ -337,7 +388,7 @@ async function insertInto_effets_indesirables(connectionSusarEuV2, tbEffetsIndes
      * @param {*} tbMedicaments 
      * @param {*} tbEffetsIndesirables 
      */
-    async function createSusarV2_parLot(connectionSusarEuV2, tbCtLL, tbMedicaments, tbEffetsIndesirables, tbMedical_history) {
+    async function createSusarV2_parLot(connectionSusarEuV2, tbCtLL, tbMedicaments, tbEffetsIndesirables, tbMedical_history, lotTbIndication_EU) {
       for (const Ctll of tbCtLL) {
         // console.log('EV 3 : ',tbCtLL.EV_SafetyReportIdentifier)
         if (await existeDejaEV_SafetyReportId(connectionSusarEuV2, Ctll.EV_SafetyReportIdentifier) === false) {
@@ -345,6 +396,7 @@ async function insertInto_effets_indesirables(connectionSusarEuV2, tbEffetsIndes
           const Medicaments = tbMedicaments.filter(item => item.idCTLL === Ctll.idCTLL);
           const EffetsIndesirables = tbEffetsIndesirables.filter(item => item.idCTLL === Ctll.idCTLL);
           const MedHist = tbMedical_history.filter(item => item.idCTLL === Ctll.idCTLL);
+          const Indication = lotTbIndication_EU.filter(item => item.idCTLL === Ctll.idCTLL);
 
           try {
             await connectionSusarEuV2.beginTransaction();
@@ -355,6 +407,7 @@ async function insertInto_effets_indesirables(connectionSusarEuV2, tbEffetsIndes
               await insertInto_medicaments(connectionSusarEuV2, Medicaments, idSusarEu);
               await insertInto_effets_indesirables(connectionSusarEuV2, EffetsIndesirables, idSusarEu);
               await insertInto_medical_history(connectionSusarEuV2, MedHist, idSusarEu);
+              await insertInto_indications(connectionSusarEuV2, Indication, idSusarEu);
 
               await connectionSusarEuV2.commit();
 

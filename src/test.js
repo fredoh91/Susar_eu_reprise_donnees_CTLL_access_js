@@ -71,15 +71,15 @@ const main = async () => {
   // const tbMedicaments = await chargementObjet("tbMedicaments")
   // const tbEffetsIndesirables = await chargementObjet("tbEffetsIndesirables")
 
-  // const userAdresseMail = await donneToutAdresseMail(poolSusarDataOdbc)
+  const userAdresseMail = await donneToutAdresseMail(poolSusarDataOdbc)
 
-  // Object.defineProperty(global, 'userAdresseMail', {
-  //   value: userAdresseMail,
-  //   writable: false, // Empêche la modification de la valeur
-  //   configurable: false, // Empêche la suppression ou la redéfinition de la propriété
-  //   enumerable: true, // Permet d'énumérer la propriété (facultatif)
-  // });
-
+  Object.defineProperty(global, 'userAdresseMail', {
+    value: userAdresseMail,
+    writable: false, // Empêche la modification de la valeur
+    configurable: false, // Empêche la suppression ou la redéfinition de la propriété
+    enumerable: true, // Permet d'énumérer la propriété (facultatif)
+  });
+// console.log (global.userAdresseMail.filter((mail) => mail.UserName === 'Frannou')[0])
   // console.log(await donneAdresseMail(poolSusarDataOdbc,'Frannou'))  
   // console.log(await donneAdresseMail(poolSusarDataOdbc,'Mnedelec')) 
   // console.log(await donneAdresseMail(poolSusarDataOdbc,'Mnedeloc')) 
@@ -111,16 +111,16 @@ const main = async () => {
   
   
 
-  let PT = `Chronic obstructive pulmonary disease ( Yes - Not available)`
-  console.log (parseMedicalHistory(PT))
-  PT = `Cancer surgery ( Not available - Not available)`
-  console.log (parseMedicalHistory(PT))
-  PT = `Asthma ( Not available - Not available)`
-  console.log (parseMedicalHistory(PT))
-  PT = `Mammoplasty ( Not available - breast implant insertion was not cancer related and was not suspected as causal)`
-  console.log (parseMedicalHistory(PT))
-  PT = `( Not available - Not available)`
-  console.log (parseMedicalHistory(PT))
+  // let PT = `Chronic obstructive pulmonary disease ( Yes - Not available)`
+  // console.log (parseMedicalHistory(PT))
+  // PT = `Cancer surgery ( Not available - Not available)`
+  // console.log (parseMedicalHistory(PT))
+  // PT = `Asthma ( Not available - Not available)`
+  // console.log (parseMedicalHistory(PT))
+  // PT = `Mammoplasty ( Not available - breast implant insertion was not cancer related and was not suspected as causal)`
+  // console.log (parseMedicalHistory(PT))
+  // PT = `( Not available - Not available)`
+  // console.log (parseMedicalHistory(PT))
 
 
   // const Ctll = {  idCTLL: 1, BaseArchive: 0, EV_SafetyReportIdentifier: 'EU-EC-10012907966'};
@@ -129,10 +129,10 @@ const main = async () => {
   //   console.log(medoc.ProduitSuspect_EU)
   // }
   // console.log (med)
-  // const user1 = await donneAdresseMail(poolSusarDataOdbc, 'Frannou')
-  // const user2 = await donneAdresseMail(poolSusarDataOdbc, 'Mnedelec')
-  // console.log (user1.mail)
-  // console.log (user2.mail)
+  const user1 = await donneAdresseMail('Frannou')
+  const user2 = await donneAdresseMail('Mnedelec')
+  console.log (user1)
+  console.log (user2)
 
   await closePoolSusarEuV1_Odbc(poolSusarDataOdbc);
   await closePoolSusarEuV1_Odbc(poolSusarArchiveOdbc);
