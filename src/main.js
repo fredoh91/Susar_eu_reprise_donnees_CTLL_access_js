@@ -88,7 +88,8 @@ const main = async () => {
   });
 
   let idCtllDebut = parseInt(process.env.ID_CTLL_DEBUT, 10);
-  let idCtllFin = parseInt(process.env.ID_CTLL_FIN, 10);
+  // let idCtllFin = parseInt(process.env.ID_CTLL_FIN, 10);
+  let idCtllFin = parseInt(process.env.ID_CTLL_DEBUT, 10) + parseInt(process.env.PAS_UPPER, 10) - 1;
 
   while (true) {
     const tabIdCtll = await donneListIdCtll(poolSusarDataOdbc, poolSusarArchiveOdbc, idCtllDebut, idCtllFin)

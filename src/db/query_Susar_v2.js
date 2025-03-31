@@ -7,6 +7,7 @@ import {
   parseReactionListPT,
   parseMedicalHistory,
   parseIndication,
+  donneSeriousCriteria,
 } from "../util.js"
 
 
@@ -35,6 +36,10 @@ async function existeDejaEV_SafetyReportId(poolSusarEuV2, EV_SafetyReportId) {
 async function insertInto_susar_eu(connectionSusarEuV2, tbCtLL) {
   // console.log('tbCtLL : ',tbCtLL)
   // process.exit(1)
+
+
+  const seriousnessCriteria = await donneSeriousCriteria(tbCtLL);
+
   const SQL = `INSERT INTO susar_eu (
     ev_safety_report_identifier,
     dlpversion,
@@ -52,8 +57,11 @@ async function insertInto_susar_eu(connectionSusarEuV2, tbCtLL) {
     patient_sex,
     patient_age,
     patient_age_group,
+    parent_child,
     utilisateur_import,
     narratif,
+    seriousness_criteria,
+    is_case_serious,
     priorisation,
     cas_ime,
     cas_dme,
@@ -63,7 +71,7 @@ async function insertInto_susar_eu(connectionSusarEuV2, tbCtLL) {
     date_reprise_susar_eu_v1,
     created_at,
     updated_at
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)`;
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)`;
   // console.log('ev : ',tbCtLL.EV_SafetyReportIdentifier)
   // console.log('tbCtLL : ',tbCtLL)
 
@@ -83,8 +91,11 @@ async function insertInto_susar_eu(connectionSusarEuV2, tbCtLL) {
     tbCtLL.Sex,
     tbCtLL.Age,
     tbCtLL['Age Group'],
+    tbCtLL.Parent_Child,
     tbCtLL.utilisateur_import,
     tbCtLL.Narrative_reporter_comments_sender_comments,
+    seriousnessCriteria,
+    tbCtLL.Serious,
     tbCtLL.Priorisation,
     tbCtLL.CasEurope,
     tbCtLL.CasIME,

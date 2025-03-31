@@ -182,10 +182,43 @@ function parseIndication(IndicationString) {
   return parsedData;
 }
 
+/**
+ * permet de retourner une chaine de caractères contenant les critères de gravité séparés par un <BR>
+ * @param {*} tbCtLL 
+ * @returns 
+ */
+async function donneSeriousCriteria(tbCtLL) {
+
+  let gravite = '';
+
+  if (tbCtLL[' Seriousness Death'] === 'Yes') {
+    gravite = gravite === '' ? 'Death' : gravite + '<BR>Death';
+  }
+  if (tbCtLL['Seriousness Lifethreatening'] === 'Yes') {
+    gravite = gravite === '' ? 'Life Threatening' : gravite + '<BR>Life Threatening';
+  }
+  if (tbCtLL['Seriousness Hospitalisation'] === 'Yes') {
+    gravite = gravite === '' ? 'Hospitalisation or prolongation of existing Hospitalisation' : gravite + '<BR>Hospitalisation or prolongation of existing Hospitalisation';
+  }
+  if (tbCtLL['Seriousness Disabling'] === 'Yes') {
+    gravite = gravite === '' ? 'Persistent or significant Disability / Incapacity' : gravite + '<BR>Persistent or significant Disability / Incapacity';
+  }
+  if (tbCtLL['Seriousness Congenital Anomaly'] === 'Yes') {
+    gravite = gravite === '' ? 'Congenital Anomaly / Birth defect' : gravite + '<BR>Congenital Anomaly / Birth defect';
+  }
+  if (tbCtLL['Seriousness Other'] === 'Yes') {
+    gravite = gravite === '' ? 'Other medically important condition' : gravite + '<BR>Other medically important condition';
+  }
+
+  return gravite;
+}
+
+
 export {
   generateRandomString,
   donneformattedDate,
   parseReactionListPT,
   parseMedicalHistory,
   parseIndication,
+  donneSeriousCriteria,
 };
