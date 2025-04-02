@@ -86,8 +86,12 @@ function parseReactionListPT(reactionString) {
     Duration: null,
   };
 
-  // // Supprimer une virgule à la fin de la chaîne, si elle existe
-  // reactionString = reactionString.trim().replace(/,$/, '');
+  // Nettoyer la chaîne : supprimer les caractères indésirables comme <BR>, <, etc.
+  reactionString = reactionString
+    .replace(/<BR>/g, '') // Supprimer les balises <BR>
+    .replace(/<[^>]*>/g, '') // Supprimer tout contenu entre < et >
+    .replace(/\),.*/, ')') // Supprimer tout après ")," en gardant la parenthèse fermante
+    .trim();
 
   // Vérifier si la chaîne contient une parenthèse fermante
   if (!reactionString.includes(')')) {
@@ -170,7 +174,8 @@ function parseIndication(IndicationString) {
   };
 
   // Supprimer une virgule à la fin de la chaîne, si elle existe
-  IndicationString = IndicationString.trim().replace(/,$/, '');
+  // IndicationString = IndicationString.trim().replace(/,$/, '');
+
 
   // Diviser la chaîne en deux parties en utilisant " - " comme séparateur
   const parts = IndicationString.split(' - ');
@@ -214,6 +219,19 @@ async function donneSeriousCriteria(tbCtLL) {
 }
 
 
+async function donneNarratifNbCaractere(NarrPres) {
+  if (!NarrPres || typeof NarrPres !== 'string') {
+    return 0; // Retourne 0 si la chaîne est invalide ou vide
+  }
+
+  // Expression régulière pour capturer le nombre après la première parenthèse ouvrante
+  const regex = /\((\d+)\s+chars\)/;
+  const match = NarrPres.match(regex);
+
+  // Si une correspondance est trouvée, retourne le nombre, sinon retourne 0
+  return match ? parseInt(match[1], 10) : 0;
+}
+
 export {
   generateRandomString,
   donneformattedDate,
@@ -221,4 +239,5 @@ export {
   parseMedicalHistory,
   parseIndication,
   donneSeriousCriteria,
+  donneNarratifNbCaractere,
 };

@@ -1,12 +1,12 @@
-import { 
+import {
   createPoolSusarEuV2,
   closePoolSusarEuV2,
 } from './db/dbMySQL.js';
 
 
-import { 
+import {
   createPoolSusarEuV1_Odbc,
-  closePoolSusarEuV1_Odbc,  
+  closePoolSusarEuV1_Odbc,
 } from './db/dbODBC.js';
 
 import {
@@ -14,14 +14,18 @@ import {
   donneListIdCtll,
   trtLotIdCtll,
   donneToutAdresseMail,
-} from './db/query_Susar_V1.js'
+} from './db/query_Susar_v1.js'
+
+import {
+  donnePtCodeLibPt,
+} from './db/query_Susar_v2.js'
 
 // import {
 //   donneTabCodeVU,
 //   trtLotCodeVU,
 // } from './db/requetes.js'
 
-import { 
+import {
   logger,
 } from './logs_config.js'
 
@@ -61,7 +65,7 @@ const main = async () => {
   //     logger.error(`Location: ${location}`);
   //     logger.error(err.stack);
   //   });
-  
+
   //   process.on('unhandledRejection', (reason, promise) => {
   //     const stackLines = reason.stack.split('\n');
   //     const location = stackLines[1].trim(); // Typically, the second line contains the location
@@ -70,9 +74,9 @@ const main = async () => {
   //     logger.error(reason.stack);
   //   });
   // }
-  
+
   logger.info('Début import : SUSAR_EU_V1 => SUSAR_EU_V2');
-  
+
   const poolSusarDataOdbc = await createPoolSusarEuV1_Odbc('DATA');
   const poolSusarArchiveOdbc = await createPoolSusarEuV1_Odbc('ARCHIVE');
   const poolSusarEuV2 = await createPoolSusarEuV2();
@@ -82,6 +86,15 @@ const main = async () => {
   const userAdresseMail = await donneToutAdresseMail(poolSusarDataOdbc)
   Object.defineProperty(global, 'userAdresseMail', {
     value: userAdresseMail,
+    writable: false, // Empêche la modification de la valeur
+    configurable: false, // Empêche la suppression ou la redéfinition de la propriété
+    enumerable: true, // Permet d'énumérer la propriété (facultatif)
+  });
+
+  // Permet de charger en global la variable ptCodeLibPt (lien entre le code PT et le libellé PT)
+  const ptCodeLibPt = await donnePtCodeLibPt(poolSusarEuV2)
+  Object.defineProperty(global, 'ptCodeLibPt', {
+    value: ptCodeLibPt,
     writable: false, // Empêche la modification de la valeur
     configurable: false, // Empêche la suppression ou la redéfinition de la propriété
     enumerable: true, // Permet d'énumérer la propriété (facultatif)

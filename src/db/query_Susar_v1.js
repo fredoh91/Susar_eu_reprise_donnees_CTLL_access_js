@@ -293,7 +293,11 @@ async function donneAdresseMail(userName) {
     return userName; // Retourne le userName si aucun mail n'est trouvé
   }
 }
-
+/**
+ * Permet de récupérer toutes les adresses mails des utilisateurs, pour la stocker en global
+ * @param {*} poolSusarDataOdbc 
+ * @returns 
+ */
 async function donneToutAdresseMail(poolSusarDataOdbc) {
 
   const SQL = `SELECT TbUsers.mail, TbUsers.UserName 
@@ -308,6 +312,8 @@ async function donneToutAdresseMail(poolSusarDataOdbc) {
     return null
   }
 }
+
+
 
 async function donneSQL_IN(tabIdCtll, typeBase) {
 

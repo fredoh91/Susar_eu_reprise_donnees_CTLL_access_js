@@ -79,7 +79,7 @@ const main = async () => {
     configurable: false, // Empêche la suppression ou la redéfinition de la propriété
     enumerable: true, // Permet d'énumérer la propriété (facultatif)
   });
-// console.log (global.userAdresseMail.filter((mail) => mail.UserName === 'Frannou')[0])
+  // console.log (global.userAdresseMail.filter((mail) => mail.UserName === 'Frannou')[0])
   // console.log(await donneAdresseMail(poolSusarDataOdbc,'Frannou'))  
   // console.log(await donneAdresseMail(poolSusarDataOdbc,'Mnedelec')) 
   // console.log(await donneAdresseMail(poolSusarDataOdbc,'Mnedeloc')) 
@@ -87,14 +87,48 @@ const main = async () => {
   // const PT = 'Cardiac failure acute (Not Recovered/Not Resolved - 07/07/2022 - 14d)'
   // const PT = 'Cardiac failure acute (Not Recovered/Not Resolved - 07/07/2022 - 14d),'
 
-  // let PT = `Drug-induced liver injury (Recovering/Resolving - n/a - n/a),`
-  // console.log (parseReactionListPT(PT))
-  // PT = `Pleural effusion (Unknown - 16/01/2`
-  // console.log (parseReactionListPT(PT))
-  // PT = `Platelet count decreased (Recoveri`
-  // console.log (parseReactionListPT(PT))
-  // PT = `Chronic obstructive pulmonary disease (Recovered/Resolved - 27/06/2022 - 16d),`
-  // console.log (parseReactionListPT(PT))
+  let PT = `Drug-induced liver injury (Recovering/Resolving - n/a - n/a),`
+  console.log(PT, parseReactionListPT(PT))
+  PT = `Pleural effusion (Unknown - 16/01/2`
+  console.log(PT, parseReactionListPT(PT))
+  PT = `Platelet count decreased (Recoveri`
+  console.log(PT, parseReactionListPT(PT))
+  PT = `Chronic obstructive pulmonary disease (Recovered/Resolved - 27/06/2022 - 16d),`
+  console.log(PT, parseReactionListPT(PT))
+  PT = `Pneumonia influenzal (Not Recovered/Not Resolved - 21/01/2025 - n/a)`
+  console.log(PT, parseReactionListPT(PT))
+  PT = `Platelet count decreased (Recovering/Resolving - 22/10/2024 - n/a)`
+  console.log(PT, parseReactionListPT(PT))
+  PT = `Dehydration (Recovered/Resolved - 04/11/2024 - 1d),`
+  console.log(PT, parseReactionListPT(PT))
+  PT = `Diarrhoea (Recovered/Resolved - 04/11/2024 - 1d),`
+  console.log(PT, parseReactionListPT(PT))
+  PT = `Hypokalaemia (Recovered/Resolved - 04/11/2024 - 1d),`
+  console.log(PT, parseReactionListPT(PT))
+  PT = `Hyponatraemia (Recovered/Resolved - 04/11/2024 - 1d),`
+  console.log(PT, parseReactionListPT(PT))
+  PT = `Blood bilirubin increased (Not Recovered/Not Resolved - 19/07/2024 - n/a),<BR>`
+  console.log(PT, parseReactionListPT(PT))
+  PT = `Respiratory distress (Fatal - 05/07/2023 - n/a),<`
+  console.log(PT, parseReactionListPT(PT))
+  PT = `Respiratory distress (Fatal - 05/07/2023 - n/a),<`
+  console.log(PT, parseReactionListPT(PT))
+  PT = `Rash (Not Recovered/Not Resolved - 10/01/2025 - n/a),<`
+  console.log(PT, parseReactionListPT(PT))
+  PT = `Jugular vein thrombosis (Recovered/Resolved - 27/07/2023 - 2d),<BR><`
+  console.log(PT, parseReactionListPT(PT))
+  PT = `Blood alkaline phosphatase increased (Recovered/Resolved - 31/10/2024 - 5841min),<BR><B`
+  console.log(PT, parseReactionListPT(PT))
+  // PT = ``
+  // console.log (PT,parseReactionListPT(PT))
+  // PT = ``
+  // console.log (PT,parseReactionListPT(PT))
+  // PT = ``
+  // console.log (PT,parseReactionListPT(PT))
+
+
+
+
 
   // const parser = new MedicParser();
   // let Med = `VYXEOS LIPOSOMAL POWDER FOR CONCENTRATE FOR SOLUTION FOR INFUSION [CYTARABINE, DAUNORUBICIN] (S - Acute myeloid leukaemia - Not applicable - [07/06/2022 - n/a - 100ug/m2 - Intravenous use])`
@@ -107,20 +141,9 @@ const main = async () => {
   // // PMedT = `HZN-4920 [HZN-4920] (S - Prophylaxis against transplant rejection - n/a - [07/04/2022 - 1d - 1500mg - Intravenous use - More in ICSR])`
   // console.log(parser.parseMedicCtll(Med))
 
-  
-  
-  
 
-  // let PT = `Chronic obstructive pulmonary disease ( Yes - Not available)`
-  // console.log (parseMedicalHistory(PT))
-  // PT = `Cancer surgery ( Not available - Not available)`
-  // console.log (parseMedicalHistory(PT))
-  // PT = `Asthma ( Not available - Not available)`
-  // console.log (parseMedicalHistory(PT))
-  // PT = `Mammoplasty ( Not available - breast implant insertion was not cancer related and was not suspected as causal)`
-  // console.log (parseMedicalHistory(PT))
-  // PT = `( Not available - Not available)`
-  // console.log (parseMedicalHistory(PT))
+
+
 
 
   // const Ctll = {  idCTLL: 1, BaseArchive: 0, EV_SafetyReportIdentifier: 'EU-EC-10012907966'};
@@ -129,10 +152,10 @@ const main = async () => {
   //   console.log(medoc.ProduitSuspect_EU)
   // }
   // console.log (med)
-  const user1 = await donneAdresseMail('Frannou')
-  const user2 = await donneAdresseMail('Mnedelec')
-  console.log (user1)
-  console.log (user2)
+  // const user1 = await donneAdresseMail('Frannou')
+  // const user2 = await donneAdresseMail('Mnedelec')
+  // console.log (user1)
+  // console.log (user2)
 
   await closePoolSusarEuV1_Odbc(poolSusarDataOdbc);
   await closePoolSusarEuV1_Odbc(poolSusarArchiveOdbc);
