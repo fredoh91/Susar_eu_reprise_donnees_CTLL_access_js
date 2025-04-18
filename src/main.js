@@ -18,6 +18,7 @@ import {
 
 import {
   donnePtCodeLibPt,
+  donneLienIntSub_v1_v2,
 } from './db/query_Susar_v2.js'
 
 // import {
@@ -100,6 +101,14 @@ const main = async () => {
     enumerable: true, // Permet d'énumérer la propriété (facultatif)
   });
 
+  // Permet de charger en global la variable lienIntSub_v1_v2 (lien des tables intervenant_substance_dmm entre les deux BDD susar_eu_v1 et susar_eu_v2)
+  const lienIntSub_v1_v2 = await donneLienIntSub_v1_v2(poolSusarEuV2)
+  Object.defineProperty(global, 'lienIntSub_v1_v2', {
+    value: lienIntSub_v1_v2,
+    writable: false, // Empêche la modification de la valeur
+    configurable: false, // Empêche la suppression ou la redéfinition de la propriété
+    enumerable: true, // Permet d'énumérer la propriété (facultatif)
+  });
   let idCtllDebut = parseInt(process.env.ID_CTLL_DEBUT, 10);
   // let idCtllFin = parseInt(process.env.ID_CTLL_FIN, 10);
   let idCtllFin = parseInt(process.env.ID_CTLL_DEBUT, 10) + parseInt(process.env.PAS_UPPER, 10) - 1;

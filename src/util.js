@@ -218,6 +218,14 @@ async function donneSeriousCriteria(tbCtLL) {
   return gravite;
 }
 
+async function donneSQL_where_IN(tabId) {
+  if (!Array.isArray(tabId) || tabId.length === 0) {
+    return ''; // Retourne une chaîne vide si tabId n'est pas un tableau ou est vide
+  }
+
+  // Joindre les éléments du tableau avec une virgule
+  return tabId.join(',');
+}
 
 async function donneNarratifNbCaractere(NarrPres) {
   if (!NarrPres || typeof NarrPres !== 'string') {
@@ -240,4 +248,5 @@ export {
   parseIndication,
   donneSeriousCriteria,
   donneNarratifNbCaractere,
+  donneSQL_where_IN,
 };

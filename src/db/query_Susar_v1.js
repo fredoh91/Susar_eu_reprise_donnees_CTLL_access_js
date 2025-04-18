@@ -251,6 +251,28 @@ async function donneLotTbIndication_EU(poolSusarData, lstCtll, typeBase) {
   }
 }
 
+/**
+ * 
+ * @param {*} poolSusarDataOdbc 
+ * @param {*} poolSusarArchiveOdbc 
+ * @param {*} tabIdCtll 
+ */
+async function donneLotTbProduit_PT_EU_Evaluation(poolSusarData, lstCtll, typeBase) {
+
+  let resu = null
+  if (typeBase === 'ARCHIVE') {
+    const SQL = `SELECT * FROM Produit_PT_EU_Evaluation_archive WHERE Produit_PT_EU_Evaluation_archive.idCTLL IN (${lstCtll});`
+    resu = await poolSusarData.query(SQL);
+    return resu
+  } else if (typeBase === 'DATA') {
+    const SQL = `SELECT * FROM Produit_PT_EU_Evaluation WHERE Produit_PT_EU_Evaluation.idCTLL IN (${lstCtll});`
+    resu = await poolSusarData.query(SQL)
+    return resu
+  } else {
+    return false
+  }
+}
+
 // /**
 //  * 
 //  * @param {*} poolSusarDataOdbc 
@@ -352,12 +374,14 @@ async function trtLotIdCtll(poolSusarDataOdbc, poolSusarArchiveOdbc, connectionS
     const lotTbMedicaments_Data = await donneLotTbProduits_EU(poolSusarDataOdbc, lstCtll_Data, 'DATA');
     // tableau d'objet des PT_EU
     const lotTbEffetsIndesirables_Data = await donneLotTbPT_EU(poolSusarDataOdbc, lstCtll_Data, 'DATA');
-    // tableau d'objet des PT_EU
+    // tableau d'objet des Structured_Medical_History_EU
     const lotTbMedical_history_Data = await donneLotTbMedHist_EU(poolSusarDataOdbc, lstCtll_Data, 'DATA');
-    // tableau d'objet des PT_EU
+    // tableau d'objet des Indication_EU
     const lotTbIndication_EU_Data = await donneLotTbIndication_EU(poolSusarDataOdbc, lstCtll_Data, 'DATA');
+    // tableau d'objet des Produit_PT_EU_Evaluation
+    const lotTbProduit_PT_EU_Evaluation_Data = await donneLotTbProduit_PT_EU_Evaluation(poolSusarDataOdbc, lstCtll_Data, 'DATA');
 
-    await createSusarV2_parLot(connectionSusarEuV2, lotTbCtLL_Data, lotTbMedicaments_Data, lotTbEffetsIndesirables_Data, lotTbMedical_history_Data, lotTbIndication_EU_Data);
+    await createSusarV2_parLot(connectionSusarEuV2, lotTbCtLL_Data, lotTbMedicaments_Data, lotTbEffetsIndesirables_Data, lotTbMedical_history_Data, lotTbIndication_EU_Data, lotTbProduit_PT_EU_Evaluation_Data);
   }
 
   // liste des idCTLL séparés par des virgules pour construire une clause SQL IN (...)
@@ -370,12 +394,14 @@ async function trtLotIdCtll(poolSusarDataOdbc, poolSusarArchiveOdbc, connectionS
     const lotTbMedicaments_Archive = await donneLotTbProduits_EU(poolSusarArchiveOdbc, lstCtll_Archive, 'ARCHIVE');
     // tableau d'objet des PT_EU
     const lotTbEffetsIndesirables_Archive = await donneLotTbPT_EU(poolSusarArchiveOdbc, lstCtll_Archive, 'ARCHIVE');
-    // tableau d'objet des PT_EU
+    // tableau d'objet des Structured_Medical_History_EU
     const lotTbMedical_history_Archive = await donneLotTbMedHist_EU(poolSusarDataOdbc, lstCtll_Archive, 'ARCHIVE');
-    // tableau d'objet des PT_EU
+    // tableau d'objet des Indication_EU
     const lotTbIndication_EU_Archive = await donneLotTbIndication_EU(poolSusarDataOdbc, lstCtll_Archive, 'ARCHIVE');
+    // tableau d'objet des Produit_PT_EU_Evaluation
+    const lotTbProduit_PT_EU_Evaluation_Archive = await donneLotTbProduit_PT_EU_Evaluation(poolSusarDataOdbc, lstCtll_Archive, 'ARCHIVE');
 
-    await createSusarV2_parLot(connectionSusarEuV2, lotTbCtLL_Archive, lotTbMedicaments_Archive, lotTbEffetsIndesirables_Archive, lotTbMedical_history_Archive, lotTbIndication_EU_Archive);
+    await createSusarV2_parLot(connectionSusarEuV2, lotTbCtLL_Archive, lotTbMedicaments_Archive, lotTbEffetsIndesirables_Archive, lotTbMedical_history_Archive, lotTbIndication_EU_Archive, lotTbProduit_PT_EU_Evaluation_Archive);
   }
 
 }
