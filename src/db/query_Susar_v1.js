@@ -45,90 +45,6 @@ async function donneListIdCtll(poolSusarDataOdbc, poolSusarArchiveOdbc, idCtllDe
   return mergedidCtll;
 }
 
-// /**
-//  * 
-//  * @param {*} poolSusarDataOdbc 
-//  * @param {*} poolSusarArchiveOdbc 
-//  * @param {*} tabIdCtll 
-//  */
-// async function donneTbCTLL(poolSusarDataOdbc, poolSusarArchiveOdbc, Ctll) {
-//   let resu = null;
-//   // console.log('Ctll.BaseArchive : ', Ctll.BaseArchive)
-//   if (Ctll.BaseArchive === -1) {
-//     const SQL = `SELECT * FROM CTLL_archive WHERE CTLL_archive.idCTLL = ${Ctll.idCTLL};`
-//     // console.log(SQL)
-//     resu = await poolSusarArchiveOdbc.query(SQL);
-//   } else if (Ctll.BaseArchive === 0) {
-//     const SQL = `SELECT * FROM CTLL WHERE CTLL.idCTLL = ${Ctll.idCTLL};`
-//     // console.log(SQL)
-//     resu = await poolSusarDataOdbc.query(SQL)
-//   } else {
-//     return false
-//   }
-
-//   if (resu) {
-//     const tbCTLL = resu[0]
-//     // On récupére le mail de l'utilisateur_import : donneAdresseMail(poolSusarDataOdbc, userName)
-//     const mailUserName = await donneAdresseMail(poolSusarDataOdbc, tbCTLL.UtilisateurImport)
-//     tbCTLL.utilisateur_import = mailUserName.mail;
-
-//     return (tbCTLL)
-//   } else {
-//     return false
-//   }
-// }
-
-// /**
-//  * 
-//  * @param {*} poolSusarDataOdbc 
-//  * @param {*} poolSusarArchiveOdbc 
-//  * @param {*} tabIdCtll 
-//  */
-// async function donneTbProduits_EU(poolSusarDataOdbc, poolSusarArchiveOdbc, Ctll) {
-//   let resu = null
-//   if (Ctll.BaseArchive === -1) {
-//     const SQL = `SELECT * FROM Produits_EU_archive WHERE Produits_EU_archive.idCTLL = ${Ctll.idCTLL};`
-//     resu = await poolSusarArchiveOdbc.query(SQL);
-//   } else if (Ctll.BaseArchive === 0) {
-//     const SQL = `SELECT * FROM Produits_EU WHERE Produits_EU.idCTLL = ${Ctll.idCTLL};`
-//     resu = await poolSusarDataOdbc.query(SQL)
-//     // console.log(resu.length)
-//   } else {
-//     return false
-//   }
-
-//   if (resu) {
-//     return (resu)
-//   } else {
-//     return false
-//   }
-// }
-
-// /**
-//  * 
-//  * @param {*} poolSusarDataOdbc 
-//  * @param {*} poolSusarArchiveOdbc 
-//  * @param {*} tabIdCtll 
-//  */
-// async function donneTbPT_EU(poolSusarDataOdbc, poolSusarArchiveOdbc, Ctll) {
-//   let resu = null
-//   if (Ctll.BaseArchive === -1) {
-//     const SQL = `SELECT * FROM PT_EU_archive WHERE PT_EU_archive.idCTLL = ${Ctll.idCTLL};`
-//     resu = await poolSusarArchiveOdbc.query(SQL);
-//   } else if (Ctll.BaseArchive === 0) {
-//     const SQL = `SELECT * FROM PT_EU WHERE PT_EU.idCTLL = ${Ctll.idCTLL};`
-//     resu = await poolSusarDataOdbc.query(SQL)
-//   } else {
-//     return false
-//   }
-
-//   if (resu) {
-//     return (resu)
-//   } else {
-//     return false
-//   }
-// }
-
 /**
  * 
  * @param {*} poolSusarDataOdbc 
@@ -228,7 +144,6 @@ async function donneLotTbMedHist_EU(poolSusarData, lstCtll, typeBase) {
   }
 }
 
-
 /**
  * 
  * @param {*} poolSusarDataOdbc 
@@ -273,23 +188,19 @@ async function donneLotTbProduit_PT_EU_Evaluation(poolSusarData, lstCtll, typeBa
   }
 }
 
-// /**
-//  * 
-//  * @param {*} poolSusarDataOdbc 
-//  * @param {*} poolSusarArchiveOdbc 
-//  * @param {*} tabIdCtll 
-//  */
-// async function donneAdresseMail_requeteBaseAccess(poolSusarDataOdbc, userName) {
+/**
+ * 
+ * @param {*} poolSusarDataOdbc 
+ * @param {*} poolSusarArchiveOdbc 
+ * @param {*} tabIdCtll 
+ */
+async function donneTbProduit_PT_EU_byId(poolSusarDataOdbc, lstCtll) {
+  let resu = null
+  const SQL = `SELECT * FROM Produit_PT_EU WHERE Produit_PT_EU.idProduit_PT = ${lstCtll};`
+  resu = await poolSusarDataOdbc.query(SQL);
+  return resu
 
-//   const SQL = `SELECT TbUsers.mail, TbUsers.UserName FROM TbUsers GROUP BY TbUsers.mail, TbUsers.UserName HAVING TbUsers.UserName='${userName}';`
-//   const resu = await poolSusarDataOdbc.query(SQL);
-
-//   if (resu) {
-//     return (resu[0])
-//   } else {
-//     return userName
-//   }
-// }
+}
 
 /**
  * 
@@ -335,8 +246,6 @@ async function donneToutAdresseMail(poolSusarDataOdbc) {
   }
 }
 
-
-
 async function donneSQL_IN(tabIdCtll, typeBase) {
 
   if (typeBase === 'DATA') {
@@ -381,7 +290,7 @@ async function trtLotIdCtll(poolSusarDataOdbc, poolSusarArchiveOdbc, connectionS
     // tableau d'objet des Produit_PT_EU_Evaluation
     const lotTbProduit_PT_EU_Evaluation_Data = await donneLotTbProduit_PT_EU_Evaluation(poolSusarDataOdbc, lstCtll_Data, 'DATA');
 
-    await createSusarV2_parLot(connectionSusarEuV2, lotTbCtLL_Data, lotTbMedicaments_Data, lotTbEffetsIndesirables_Data, lotTbMedical_history_Data, lotTbIndication_EU_Data, lotTbProduit_PT_EU_Evaluation_Data);
+    await createSusarV2_parLot(connectionSusarEuV2, poolSusarDataOdbc, lotTbCtLL_Data, lotTbMedicaments_Data, lotTbEffetsIndesirables_Data, lotTbMedical_history_Data, lotTbIndication_EU_Data, lotTbProduit_PT_EU_Evaluation_Data);
   }
 
   // liste des idCTLL séparés par des virgules pour construire une clause SQL IN (...)
@@ -401,7 +310,7 @@ async function trtLotIdCtll(poolSusarDataOdbc, poolSusarArchiveOdbc, connectionS
     // tableau d'objet des Produit_PT_EU_Evaluation
     const lotTbProduit_PT_EU_Evaluation_Archive = await donneLotTbProduit_PT_EU_Evaluation(poolSusarDataOdbc, lstCtll_Archive, 'ARCHIVE');
 
-    await createSusarV2_parLot(connectionSusarEuV2, lotTbCtLL_Archive, lotTbMedicaments_Archive, lotTbEffetsIndesirables_Archive, lotTbMedical_history_Archive, lotTbIndication_EU_Archive, lotTbProduit_PT_EU_Evaluation_Archive);
+    await createSusarV2_parLot(connectionSusarEuV2, poolSusarDataOdbc, lotTbCtLL_Archive, lotTbMedicaments_Archive, lotTbEffetsIndesirables_Archive, lotTbMedical_history_Archive, lotTbIndication_EU_Archive, lotTbProduit_PT_EU_Evaluation_Archive);
   }
 
 }
@@ -413,4 +322,5 @@ export {
   trtLotIdCtll,
   donneAdresseMail,
   donneToutAdresseMail,
+  donneTbProduit_PT_EU_byId,
 }

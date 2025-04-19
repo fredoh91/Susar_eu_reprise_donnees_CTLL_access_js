@@ -12,6 +12,9 @@ import {
   donneSQL_where_IN,
 } from "../util.js"
 
+import {
+  donneTbProduit_PT_EU_byId,
+} from "./query_Susar_v1.js"
 
 import MedicParser from '../MedicParser.js';
 
@@ -235,17 +238,14 @@ async function insertInto_intervenant_substance_dmm_susar_eu(connectionSusarEuV2
       continue; // Passer à l'itération suivante si le produit suspect est manquant
     }
 
-    // console.log('Med.IdInter_Sub_DMM : ', Med.IdInter_Sub_DMM) 
-
-    // console.log (global.lienIntSub_v1_v2[0].filter(item => item.id_inter_sub_dmm_susar_eu_v1 === 338))
-
     // On recherche la correspondance dans lienIntSub_v1_v2
     const idIntervenant_substance_dmm = global.lienIntSub_v1_v2[0]
       .filter(item => item.id_inter_sub_dmm_susar_eu_v1 === Med.IdInter_Sub_DMM)
       .map(item => item.id)[0] ?? null; // Extraire uniquement la propriété "id"
 
     if (!idIntervenant_substance_dmm) {
-      logger.error(`Impossible de faire le lien entre les deux tables intervenant_substance_dmm pour les deux environnement pour le médicament : ${Med}`);
+      // logger.error(`Impossible de faire le lien entre les deux tables intervenant_substance_dmm pour les deux environnement pour le médicament : ${Med}`);
+      logger.error(`### missing data ### Impossible de trouver, dans la table liaisons_intervenant_substance_dmm_v1_v2 l'id intervenant susar_v1 : ${Med.IdInter_Sub_DMM}`);
       continue; // Passer à l'itération suivante si le produit suspect est manquant
     }
     const SQL = `INSERT INTO intervenant_substance_dmm_susar_eu (
@@ -395,37 +395,48 @@ async function insertInto_medical_history(connectionSusarEuV2, tbMedical_history
  * @returns 
  */
 
-async function insertInto_substance_pt(connectionSusarEuV2, tbProduit_PT_EU_Evaluation, idSusarEu, insertedIdsMedicaments, insertedIdsEI) {
+async function insertInto_substance_pt(connectionSusarEuV2, poolSusarDataOdbc, tbProduit_PT_EU_Evaluation, idSusarEu, insertedIdsMedicaments, insertedIdsEI) {
   const insertIds = [];
   // on récupère les données des medicaments et effets indésirables insérés à partir des tableaux passés en paramètre : insertedIdsMedicaments, insertedIdsEI
   //   1 - on transforme les tableaux en chaine de caractères séparées par des virgules ex : [ 2583, 2584, 2585, 2586, 2587, 2588 ] => '2583, 2584, 2585, 2586, 2587, 2588'
-  const where_IN_Med = await donneSQL_where_IN (insertedIdsMedicaments)
-  const where_IN_EI = await donneSQL_where_IN (insertedIdsEI)
+  const where_IN_Med = await donneSQL_where_IN(insertedIdsMedicaments)
+  const where_IN_EI = await donneSQL_where_IN(insertedIdsEI)
   //   2 - on fait une requete dans la table intervenant_substance_dmm_v1 pour récupérer les substance_PT en fonction des idMedicaments et idEffetsIndesirables
-  const lstMed_susar_v2 = await donneMed_susarV2_byId (where_IN_Med)
-  const lstEI_susar_v2 = await donneEI_susarV2_byId (where_IN_EI)
-  
+  const lstMed_susar_v2 = await donneMed_susarV2_byId(where_IN_Med)
+  const lstEI_susar_v2 = await donneEI_susarV2_byId(where_IN_EI)
+
   for (const Eval of tbProduit_PT_EU_Evaluation) {
 
     // On boucle sur les evalutions de ce susar, le champ 'idProduit_PT' nous renseigne sur l'id dans la table susar_v1 Produit_PT_EU.idProduit_PT
     //  1 - On fait une requete dans susar_v1 sur Produit_PT_EU.idProduit_PT
+    const Produit_PT_EU_susar_v1 = await donneTbProduit_PT_EU_byId(poolSusarDataOdbc, Eval.idProduit_PT_Eval)
     //  2a - On regarde si on trouve une correspondance entre Produit_PT_EU.DCI_EU et lstMed_susar_v2['substancename']
     //      - Si oui, on stocke la valeur de susar_v2 : const substance_pour_insert = lstMed_susar_v2['substancename']
     //      - Si non, on stocke la valeur de susar_v1 : const substance_pour_insert = Produit_PT_EU.DCI_EU
+    // const substance_pour_insert = Produit_PT_EU_susar_v1.DCI_EU
     //  2b - On regarde si on trouve une correspondance entre Produit_PT_EU.Reaction_List_PT et lstEI_susar_v2['substancename']
     //      - Si oui, on stocke la valeur de susar_v2 : const EffInd_pour_insert = lstEI_susar_v2['substancename']
     //      - Si non, on stocke la valeur de susar_v1 : const EffInd_pour_insert = Produit_PT_EU.Reaction_List_PT
+    // const EffInd_pour_insert = Produit_PT_EU_susar_v1.Reaction_List_PT
     //  3 - On cherche si il existe une ligne pour substance_pour_insert / EffInd_pour_insert
+    let idSubstancePt = await donneIdSubstance_pt_bySubst_byEI(connectionSusarEuV2, Produit_PT_EU_susar_v1.DCI_EU, Produit_PT_EU_susar_v1.Reaction_List_PT)
     //      - Si oui, on récupère son id : const idSubstancePt = susar_eu_v2.substance_pt
     //      - Si non, on crée une ligne dans susar_eu_v2.substance_pt et récupère son id : const idSubstancePt = susar_eu_v2.substance_pt
-    //  4 - Insertion dans la table susar_eu_v2.substance_pt_eval avec l'evalution en cours (de cette boucle for) 
+    if (!idSubstancePt) {
+      idSubstancePt = await insertInto_substance_pt_susar_v2(connectionSusarEuV2, Produit_PT_EU_susar_v1)
+    }
+    //  4 - Insertion dans la table susar_eu_v2.substance_pt_eval avec l'evalution en cours (de cette boucle for)
+    const  idSubstancePtEval = await insertInto_substance_pt_eval_susar_v2(connectionSusarEuV2, Eval)
     //      et on récupère son id : const idSubstancePtEval = susar_eu_v2.substance_pt_eval.id
     //  5 - Insertion dans les tables de liaison :
+    await insertInto_substance_pt_eval_substance_pt(connectionSusarEuV2, idSubstancePtEval, idSubstancePt)
     //      - substance_pt_eval_substance_pt : INSERT INTO substance_pt_eval_substance_pt (substance_pt_eval_id, substance_pt_id) VALUES(idSubstancePtEval, idSubstancePt); 
+    await insertInto_substance_pt_eval_susar_eu(connectionSusarEuV2, idSubstancePtEval, idSusarEu)
     //      - substance_pt_eval_susar_eu : INSERT INTO substance_pt_eval_susar_eu (substance_pt_eval_id, susar_eu_id) VALUES(idSubstancePtEval, idSusarEu);
+    await insertInto_substance_pt_susar_eu(connectionSusarEuV2, idSubstancePt, idSusarEu)
     //      - substance_pt_susar_eu : INSERT INTO substance_pt_susar_eu (substance_pt_id, susar_eu_id) VALUES(idSubstancePt, idSusarEu);
 
-   
+
 
 
     const SQL = `INSERT INTO medical_history (
@@ -558,7 +569,7 @@ async function insertInto_indications(connectionSusarEuV2, tbIndication, idSusar
  * @param {*} tbMedicaments 
  * @param {*} tbEffetsIndesirables 
  */
-async function createSusarV2_parLot(connectionSusarEuV2, tbCtLL, tbMedicaments, tbEffetsIndesirables, tbMedical_history, tbIndication_EU, tbProduit_PT_EU_Evaluation) {
+async function createSusarV2_parLot(connectionSusarEuV2, poolSusarDataOdbc, tbCtLL, tbMedicaments, tbEffetsIndesirables, tbMedical_history, tbIndication_EU, tbProduit_PT_EU_Evaluation) {
   for (const Ctll of tbCtLL) {
     // console.log('EV 3 : ',tbCtLL.EV_SafetyReportIdentifier)
     if (await existeDejaEV_SafetyReportId(connectionSusarEuV2, Ctll.EV_SafetyReportIdentifier) === false) {
@@ -583,7 +594,7 @@ async function createSusarV2_parLot(connectionSusarEuV2, tbCtLL, tbMedicaments, 
           const insertedIdsEI = await insertInto_effets_indesirables(connectionSusarEuV2, EffetsIndesirables, idSusarEu);
 
           // les deux fonctions du dessus devront renvoyer des tableaux, les couples substance_PT seront traités dans une fonction située apres ce commentaire
-          // await insertInto_substance_pt(connectionSusarEuV2, Produit_PT_EU_Evaluation, idSusarEu, insertedIdsMedicaments, insertedIdsEI);
+          await insertInto_substance_pt(connectionSusarEuV2, poolSusarDataOdbc, Produit_PT_EU_Evaluation, idSusarEu, insertedIdsMedicaments, insertedIdsEI);
 
           await insertInto_medical_history(connectionSusarEuV2, MedHist, idSusarEu);
           await insertInto_indications(connectionSusarEuV2, Indication, idSusarEu);
@@ -655,6 +666,197 @@ async function donneEI_susarV2_byId(poolSusarEuV2, where_IN_EI) {
     return null
   }
 }
+
+/**
+ * 
+ * @param {*} poolSusarEuV2 
+ * @param {*} Subst 
+ * @param {*} EI 
+ * @returns 
+ */
+async function donneIdSubstance_pt_bySubst_byEI(poolSusarEuV2, Subst, libPT) {
+  const SQL = `SELECT id FROM substance_pt WHERE LOWER(active_substance_high_level) = LOWER('${Subst}') AND LOWER(reactionmeddrapt) = LOWER('${libPT}');`
+
+  const resu = await poolSusarEuV2.query(SQL);
+
+  if (resu) {
+    return (resu)
+  } else {
+    return null
+  }
+}
+
+/**
+ * 
+ * @param {*} poolSusarEuV2 
+ * @param {*} Subst 
+ * @param {*} EI 
+ * @returns 
+ */
+async function insertInto_substance_pt_susar_v2(poolSusarEuV2, Produit_PT_EU_susar_v1) {
+
+
+  const SQL = `INSERT INTO substance_pt (
+    active_substance_high_level,
+    codereactionmeddrapt,
+    reactionmeddrapt,
+  ) VALUES (?, ?, ?)`;
+  const values = [
+    Produit_PT_EU_susar_v1.DCI_EU,
+    Produit_PT_EU_susar_v1.Reaction_List_PT,
+    Produit_PT_EU_susar_v1.PT_code,
+  ];
+
+  try {
+    const resu = await connectionSusarEuV2.query(SQL, values);
+    if (resu) {
+      const insertId = resu[0].insertId;
+      return insertId;
+    } else {
+      throw new Error('Insertion dans insications a échoué');
+    }
+  } catch (error) {
+    logger.error(`Erreur lors de l'insertion dans indications : ${error.message}`);
+    throw error; // Lancer l'erreur pour qu'elle puisse être attrapée par un .catch()
+  }
+}
+
+
+/**
+ * 
+ * @param {*} poolSusarEuV2 
+ * @param {*} Eval_susar_v1 
+ * @returns 
+ */
+async function insertInto_substance_pt_eval_susar_v2(poolSusarEuV2, Eval_susar_v1) {
+
+  const SQL = `INSERT INTO substance_pt_eval (
+    assessment_outcome,
+    comments,
+    date_eval, 
+    created_at, 
+    updated_at, 
+    user_create, 
+    user_modif
+  ) VALUES (?, ?, ?)`;
+  const values = [
+    Eval_susar_v1.AssessmentOutcome,
+    Eval_susar_v1.Comments,
+    Eval_susar_v1.Date,
+    Eval_susar_v1.dateCrea,
+    Eval_susar_v1.dateModif,
+    Eval_susar_v1.UtilisateurCrea,
+    Eval_susar_v1.UtilisateurModif,
+  ];
+
+  try {
+    const resu = await connectionSusarEuV2.query(SQL, values);
+    if (resu) {
+      const insertId = resu[0].insertId;
+      return insertId;
+    } else {
+      throw new Error('Insertion dans insications a échoué');
+    }
+  } catch (error) {
+    logger.error(`Erreur lors de l'insertion dans indications : ${error.message}`);
+    throw error; // Lancer l'erreur pour qu'elle puisse être attrapée par un .catch()
+  }
+}
+
+
+
+
+/**
+ * 
+ * @param {*} poolSusarEuV2 
+ * @param {*} idSubstancePtEval 
+ * @param {*} idSubstancePt 
+ * @returns 
+ */
+async function insertInto_substance_pt_eval_substance_pt(poolSusarEuV2, idSubstancePtEval, idSubstancePt) {
+
+  const SQL = `INSERT INTO substance_pt_eval_substance_pt (substance_pt_eval_id, substance_pt_id) VALUES (?, ?)`;
+  const values = [
+    idSubstancePtEval,
+    idSubstancePt,
+  ];
+
+  try {
+    const resu = await connectionSusarEuV2.query(SQL, values);
+    if (resu) {
+      const insertId = resu[0].insertId;
+      return insertId;
+    } else {
+      throw new Error('Insertion dans insications a échoué');
+    }
+  } catch (error) {
+    logger.error(`Erreur lors de l'insertion dans indications : ${error.message}`);
+    throw error; // Lancer l'erreur pour qu'elle puisse être attrapée par un .catch()
+  }
+}
+
+
+/**
+ * 
+ * @param {*} poolSusarEuV2 
+ * @param {*} idSubstancePtEval 
+ * @param {*} idSusarEu 
+ * @returns 
+ */
+async function insertInto_substance_pt_eval_susar_eu(poolSusarEuV2, idSubstancePtEval, idSusarEu) {
+
+  const SQL = `INSERT INTO substance_pt_eval_susar_eu (substance_pt_eval_id, susar_eu_id) VALUES (?, ?)`;
+  const values = [
+    idSubstancePtEval,
+    idSusarEu,
+  ];
+
+  try {
+    const resu = await connectionSusarEuV2.query(SQL, values);
+    if (resu) {
+      const insertId = resu[0].insertId;
+      return insertId;
+    } else {
+      throw new Error('Insertion dans insications a échoué');
+    }
+  } catch (error) {
+    logger.error(`Erreur lors de l'insertion dans indications : ${error.message}`);
+    throw error; // Lancer l'erreur pour qu'elle puisse être attrapée par un .catch()
+  }
+}
+
+
+/**
+ * 
+ * @param {*} poolSusarEuV2 
+ * @param {*} idSubstancePt 
+ * @param {*} idSusarEu 
+ * @returns 
+ */
+async function insertInto_substance_pt_susar_eu(poolSusarEuV2, idSubstancePt, idSusarEu) {
+
+  const SQL = `INSERT INTO substance_pt_susar_eu (substance_pt_id, susar_eu_id) VALUES (?, ?)`;
+  const values = [
+    idSubstancePt,
+    idSusarEu,
+  ];
+
+  try {
+    const resu = await connectionSusarEuV2.query(SQL, values);
+    if (resu) {
+      const insertId = resu[0].insertId;
+      return insertId;
+    } else {
+      throw new Error('Insertion dans insications a échoué');
+    }
+  } catch (error) {
+    logger.error(`Erreur lors de l'insertion dans indications : ${error.message}`);
+    throw error; // Lancer l'erreur pour qu'elle puisse être attrapée par un .catch()
+  }
+}
+
+
+
 
 
 async function donneLienIntSub_v1_v2(poolSusarEuV2) {
