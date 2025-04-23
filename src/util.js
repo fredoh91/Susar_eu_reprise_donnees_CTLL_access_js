@@ -240,6 +240,19 @@ async function donneNarratifNbCaractere(NarrPres) {
   return match ? parseInt(match[1], 10) : 0;
 }
 
+async function donneDatePremiereEval(Produit_PT_EU_Evaluation) {
+  if (!Produit_PT_EU_Evaluation || Produit_PT_EU_Evaluation.length === 0) {
+    return null; 
+  }
+
+  const evalPlusAncienne = Produit_PT_EU_Evaluation.reduce((plusAncienne, current) => {
+    const datePlusAncienne = new Date(plusAncienne.dateCrea);
+    const dateCourante = new Date(current.dateCrea);
+    return dateCourante < datePlusAncienne ? current : plusAncienne;
+  });
+  return evalPlusAncienne ? evalPlusAncienne.dateCrea : null;
+}
+
 export {
   generateRandomString,
   donneformattedDate,
@@ -249,4 +262,5 @@ export {
   donneSeriousCriteria,
   donneNarratifNbCaractere,
   donneSQL_where_IN,
+  donneDatePremiereEval,
 };

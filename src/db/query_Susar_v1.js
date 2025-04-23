@@ -198,7 +198,12 @@ async function donneTbProduit_PT_EU_byId(poolSusarDataOdbc, lstCtll) {
   let resu = null
   const SQL = `SELECT * FROM Produit_PT_EU WHERE Produit_PT_EU.idProduit_PT = ${lstCtll};`
   resu = await poolSusarDataOdbc.query(SQL);
-  return resu
+  if (resu) {
+    return (resu[0])
+  } else {
+    return null
+  }
+
 
 }
 
