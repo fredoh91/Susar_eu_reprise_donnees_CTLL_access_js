@@ -52,8 +52,9 @@ async function existeDeja_intSubDmm_susar_eu_v2(connectionSusarEuV2, idIntervena
   // console.log(SQL_count)
   const resu = await connectionSusarEuV2.query(SQL_count, values);
   // console.log(resu)
-  if (resu.length > 0) {
-    return resu[0][0].Nb > 0;
+  // console.log(resu[0][0].Nb)
+  if (resu[0][0].Nb > 0) {
+    return true ;
   } else {
     return false;
   }
@@ -172,11 +173,32 @@ async function insertInto_medicaments(connectionSusarEuV2, tbMedicaments, idSusa
 
   // console.log ('tbMedicaments : ',tbMedicaments)
   for (const Med of tbMedicaments) {
+    if (!Med.DCI_EU) {
+      logger.error(`Pour le Produit_EU ayant l idProduit ${Med.idProduit}, on n'a pas de valeur pour DCI_EU, on ne le traite pas.`);
+      continue; // Passer à l'itération suivante si le produit suspect est manquant
+    }
+
 
     const Med_parse = parser.parseMedicCtll(Med.ProduitSuspect_EU)
-    const Med_parse_Date = Med_parse.start_date && Med_parse.start_date.match(/^\d{2}\/\d{2}\/\d{4}$/)
-      ? Med_parse.start_date.split('/').reverse().join('-') // Convertir 'DD/MM/YYYY' en 'YYYY-MM-DD'
-      : null; // Si la date est invalide, définir sur NULL
+    let Med_parse_Date = null
+    if (!Med_parse) {
+    //  logger.error(`Pas de date de début pour le médicament : ${Med.idProduit}`);
+      // continue; // Passer à l'itération suivante si la date de début est manquante    
+      Med_parse_Date = null
+    } else {
+      Med_parse_Date = Med_parse.start_date && Med_parse.start_date.match(/^\d{2}\/\d{2}\/\d{4}$/)
+        ? Med_parse.start_date.split('/').reverse().join('-') // Convertir 'DD/MM/YYYY' en 'YYYY-MM-DD'
+        : null; // Si la date est invalide, définir sur NULL
+    }
+
+    if (!Med_parse) {
+      logger.error(`Pour le Produit_EU ayant l idProduit ${Med.idProduit}, on a un probleme de Med_parse.`);
+      console.log(Med_parse)
+      // continue; // Passer à l'itération suivante si la caractérisation du médicament est manquante
+
+    }
+
+
     let prodCharac = 'NA'
     switch (Med_parse.drug_char) {
       case 'S':
@@ -258,25 +280,38 @@ async function insertInto_intervenant_substance_dmm_susar_eu(connectionSusarEuV2
 
   for (const Med of tbMedicaments) {
     if (!Med.IdInter_Sub_DMM) {
-      //logger.error(`Pas de lien avec intervenant_substance pour le médicament : ${Med}`);
+      // logger.error(`Pas de lien avec intervenant_substance pour le médicament : ${Med}`);
       continue; 
+    // } else {
+    //   // logger.info(`On a un lien avec intervenant_substance pour le médicament - idProduit : ${Med.idProduit}`);
+    //   // logger.info(`On a un lien avec intervenant_substance pour le médicament - IdInter_Sub_DMM : ${Med.IdInter_Sub_DMM}`);
+    //   logger.info(`On a un lien avec intervenant_substance pour le médicament - idCTLL : ${Med.idCTLL}`);
     }
 
     // On recherche la correspondance dans lienIntSub_v1_v2
+
+    // logger.info(`je vais chercher dans lienIntSub_v1_v2 - Med.IdInter_Sub_DMM : ${Med.IdInter_Sub_DMM}`);
     const idIntervenant_substance_dmm = global.lienIntSub_v1_v2[0]
       .filter(item => item.id_inter_sub_dmm_susar_eu_v1 === Med.IdInter_Sub_DMM)
       .map(item => item.id)[0] ?? null; // Extraire uniquement la propriété "id"
-
+    // logger.info(`j'ai trouvé un lienIntSub_v1_v2 - idCTLL : ${idIntervenant_substance_dmm}`);
     if (!idIntervenant_substance_dmm) {
       // logger.error(`Impossible de faire le lien entre les deux tables intervenant_substance_dmm pour les deux environnement pour le médicament : ${Med}`);
       logger.error(`### missing data ### Impossible de trouver, dans la table liaisons_intervenant_substance_dmm_v1_v2 l'id intervenant susar_v1 : ${Med.IdInter_Sub_DMM}`);
       continue; // Passer à l'itération suivante si le produit suspect est manquant
+    // } else {
+    //   logger.info(`Pour le produit suspect (idProduit : ${Med.idProduit}) on a trouvé ${Med.IdInter_Sub_DMM} dans lienIntSub_v1_v2`);   
     }
 
     // On test si ce couple idIntervenant_substance_dmm / idSusarEu existe déjà dans la table intervenant_substance_dmm_susar_eu
-    if (!await existeDeja_intSubDmm_susar_eu_v2(connectionSusarEuV2, idIntervenant_substance_dmm, idSusarEu)) {
+
+    const existeDeja = await existeDeja_intSubDmm_susar_eu_v2(connectionSusarEuV2, idIntervenant_substance_dmm, idSusarEu)
+    // console.log('existeDeja : ', existeDeja)
+    if (existeDeja) {
       // logger.error(`Le produit suspect ${Med.ProduitSuspect_EU} est déjà lié à un susar_eu_v2`);
       continue; // Passer à l'itération suivante si le produit suspect est déjà lié dans la base de données 
+    // } else {
+    //   logger.info(`Le produit suspect (idProduit : ${Med.idProduit}) n'est pas encore lié à un susar_eu_v2`);
     }
 
     const SQL = `INSERT INTO intervenant_substance_dmm_susar_eu (
@@ -305,11 +340,14 @@ async function insertInto_effets_indesirables(connectionSusarEuV2, tbEffetsIndes
   const insertIds = [];
   for (const EI of tbEffetsIndesirables) {
 
-
-
     const EI_parse = parseReactionListPT(EI.Tout)
 
-
+    // if(EI_parse.ReactionListPT === undefined || EI_parse.ReactionListPT === null) {
+    //   logger.error(`### missing data ### Pas de ReactionListPT pour l'effet indésirable : ${EI.Tout}`);
+    //   logger.error(`### missing data ### idPT : ${EI.idPT}`);
+    //   logger.error(`### missing data ### idCTLL : ${EI.idCTLL}`);
+    //   // continue; // Passer à l'itération suivante si la ReactionListPT est manquante
+    // }
     const ptCodePtLib = global.ptCodeLibPt[0].filter((pt) => pt.pt_name_en.toLowerCase() === EI_parse.ReactionListPT.toLowerCase());
     // const ptCode = ptCodePtLib[0].pt_code ?? null; // Si pt_code est undefined, le définir sur null
     // let ptCode = null;
