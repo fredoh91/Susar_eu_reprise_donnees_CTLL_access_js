@@ -84,6 +84,7 @@ async function insertInto_susar_eu(connectionSusarEuV2, tbCtLL, datePremiereEval
     num_eudract,
     world_wide_id,
     sponsorstudynumb,
+    sender,
 /*pays_etude,*/
     pays_survenue,
     receive_date,
@@ -114,7 +115,7 @@ async function insertInto_susar_eu(connectionSusarEuV2, tbCtLL, datePremiereEval
     date_reprise_susar_eu_v1,
     created_at,
     updated_at
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)`;
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)`;
   // console.log('ev : ',tbCtLL.EV_SafetyReportIdentifier)
   // console.log('tbCtLL : ',tbCtLL)
 
@@ -124,6 +125,7 @@ async function insertInto_susar_eu(connectionSusarEuV2, tbCtLL, datePremiereEval
     tbCtLL.StudyRegistrationNumber,
     tbCtLL.CaseReportNumber,
     tbCtLL.SponsorStudyNumber,
+    tbCtLL.Sender,
     tbCtLL.Country,
     tbCtLL.ReceiveDate,
     tbCtLL.ReceiptDate,
@@ -200,19 +202,30 @@ async function insertInto_medicaments(connectionSusarEuV2, tbMedicaments, idSusa
 
 
     let prodCharac = 'NA'
-    switch (Med_parse.drug_char) {
-      case 'S':
-        prodCharac = 'Suspect'
-        break
-      case 'C':
-        prodCharac = 'Concomitant'
-        break
-      case 'I':
-        prodCharac = 'Interacting'
-        break
-      default:
-        prodCharac = 'NA'
-        break
+
+    if (!Med_parse || !Med_parse.drug_char) {
+      logger.error(`Pas de caractérisation du médicament pour le médicament : ${Med.ProduitSuspect_EU}`);
+      console.log('Med_parse : ', Med_parse)
+      console.log('Med : ', Med)
+      process.exit(1) 
+      prodCharac = 'NA'
+      // continue; // Passer à l'itération suivante si la caractérisation du médicament est manquante
+    } else {
+      
+      switch (Med_parse.drug_char) {
+        case 'S':
+          prodCharac = 'Suspect'
+          break
+        case 'C':
+          prodCharac = 'Concomitant'
+          break
+        case 'I':
+          prodCharac = 'Interacting'
+          break
+        default:
+          prodCharac = 'NA'
+          break
+      }
     }
 
     // const prodCharac = Med_parse.drug_char
@@ -292,12 +305,12 @@ async function insertInto_intervenant_substance_dmm_susar_eu(connectionSusarEuV2
 
     // logger.info(`je vais chercher dans lienIntSub_v1_v2 - Med.IdInter_Sub_DMM : ${Med.IdInter_Sub_DMM}`);
     const idIntervenant_substance_dmm = global.lienIntSub_v1_v2[0]
-      .filter(item => item.id_inter_sub_dmm_susar_eu_v1 === Med.IdInter_Sub_DMM)
-      .map(item => item.id)[0] ?? null; // Extraire uniquement la propriété "id"
+      .filter(item => item.id_inter_sub_dmmsusar_euv1 === Med.IdInter_Sub_DMM)
+      .map(item => item.id_intervenant_substance_dmm)[0] ?? null; // Extraire uniquement la propriété "id_intervenant_substance_dmm"
     // logger.info(`j'ai trouvé un lienIntSub_v1_v2 - idCTLL : ${idIntervenant_substance_dmm}`);
     if (!idIntervenant_substance_dmm) {
       // logger.error(`Impossible de faire le lien entre les deux tables intervenant_substance_dmm pour les deux environnement pour le médicament : ${Med}`);
-      logger.error(`### missing data ### Impossible de trouver, dans la table liaisons_intervenant_substance_dmm_v1_v2 l'id intervenant susar_v1 : ${Med.IdInter_Sub_DMM}`);
+      logger.error(`### missing data ### Impossible de trouver, dans la table liaison_intervenant_substance_dmm_v1_v2 l'id intervenant susar_v1 : ${Med.IdInter_Sub_DMM}`);
       continue; // Passer à l'itération suivante si le produit suspect est manquant
     // } else {
     //   logger.info(`Pour le produit suspect (idProduit : ${Med.idProduit}) on a trouvé ${Med.IdInter_Sub_DMM} dans lienIntSub_v1_v2`);   
@@ -964,7 +977,7 @@ async function insertInto_substance_pt_susar_eu(connectionSusarEuV2, idSubstance
 
 
 async function donneLienIntSub_v1_v2(poolSusarEuV2) {
-  const SQL = `SELECT * FROM susar_eu_v2.liaisons_intervenant_substance_dmm_v1_v2;`
+  const SQL = `SELECT * FROM susar_eu_v2.liaison_intervenant_substance_dmm_v1_v2;`
   const resu = await poolSusarEuV2.query(SQL);
 
   if (resu) {
