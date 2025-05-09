@@ -137,7 +137,7 @@ async function insertInto_susar_eu(connectionSusarEuV2, tbCtLL, datePremiereEval
     tbCtLL.Age,
     tbCtLL['Age Group'],
     tbCtLL.Parent_Child,
-    tbCtLL.utilisateur_import,
+    tbCtLL.UtilisateurImport,
     ICSR_form_link,
     E2B_link,
     Complete_Narrative_link,
