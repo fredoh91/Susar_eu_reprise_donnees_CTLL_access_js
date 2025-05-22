@@ -194,9 +194,9 @@ async function donneLotTbProduit_PT_EU_Evaluation(poolSusarData, lstCtll, typeBa
  * @param {*} poolSusarArchiveOdbc 
  * @param {*} tabIdCtll 
  */
-async function donneTbProduit_PT_EU_byId(poolSusarDataOdbc, lstCtll) {
+async function donneTbProduit_PT_EU_byId(poolSusarDataOdbc, idProduit_PT) {
   let resu = null
-  const SQL = `SELECT * FROM Produit_PT_EU WHERE Produit_PT_EU.idProduit_PT = ${lstCtll};`
+  const SQL = `SELECT * FROM Produit_PT_EU WHERE Produit_PT_EU.idProduit_PT = ${idProduit_PT};`
   resu = await poolSusarDataOdbc.query(SQL);
   if (resu) {
     return (resu[0])
